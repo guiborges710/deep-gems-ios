@@ -36,3 +36,25 @@ Backpacks and boots change artwork at levels 3 and 6; later levels retain the ep
 Simulator preview arguments seed isolated temporary saves only and cannot replace the player's normal progress. CI captures Base, Loja, Melhorias, Mina and Lapidação.
 
 Visual QA adjustment: remove the baked-in backpack from ExplorerV2 while preserving straps, pose and empty fist. Draw one equipped backpack behind the character at all levels. Calibrate pickaxe grip behind the glove with -55° SwiftUI rotation / +55° SpriteKit rotation. Reserve upper space for the miner's helmet at depth zero. Capture character, acquisition and partially/finally cut gems as well as main screens.
+
+### Exact prompt set for the reference pass
+
+All used the built-in image tool. The supplied three-phone illustration was the style reference for the four original production generations; the edits referenced the generated explorer sprite. TerrainAtlas, UpgradeAtlas and ExplorerV2 requested transparent backgrounds; BaseV2 requested an opaque background. Intermediate explorer variants are not used by the app.
+
+**TerrainAtlas**
+> Create a production game sprite atlas, using the attached image ONLY as STYLE REFERENCE. Match its charming polished cartoon mobile mining game, rounded chunky stones, amber lamps and dark blue cave palette. A horizontal strip of EXACTLY FOUR equal square cells, isolated sprites centered inside each cell, transparent background, no text no UI: cell1 chunky square gray stone block with beveled edges and cracks; cell2 square earthy brown stone block; cell3 square dark blue stone block; cell4 wooden ladder with amber hanging lantern. Blocks almost fill cells but clear gaps between objects. Front view 2D game, not isometric. No phone mockup.
+
+**UpgradeAtlas**
+> Create a production game item atlas using attached image as STYLE REFERENCE ONLY. EXACTLY SIX equally sized square cells in ONE horizontal strip on genuinely transparent background. Polished charming cartoon mobile game, thick clean shapes, warm gold lighting and blue rim light. Left to right: simple brown leather explorer backpack, upgraded brown leather backpack with metal clasps and a purple crystal sticking out, epic ornate backpack with golden plates and crystals, simple leather explorer boots pair, upgraded sturdy boots pair with bronze guards, epic boots pair with gold guards and cyan crystal accents. Each object centered wholly inside its own equal cell with ample transparent margin. No words, no frames, no UI, no phone.
+
+**ExplorerV2 generation**
+> Create a single production character sprite using attached image as style reference ONLY. Match the cute youthful male miner proportions, expressive big eyes, amber hardhat with bright lamp, turquoise shirt, brown gloves and leather backpack, dark pants and brown boots in the rightmost phone. Full body front three-quarter view facing slightly right, standing confidently. His right hand (viewer right) holds a short visible brown handle at hip height with NO pickaxe head: game attaches interchangeable weapon there. The other hand relaxed. Entire body visible centered, minimal transparent padding, genuinely transparent background. Polished 2D cartoon mobile game, not realistic, clean readable silhouette, no companion, no background, no text or UI.
+
+**ExplorerV2 first edit**
+> Edit ONLY the hand holding the wooden handle: remove the entire visible wooden handle, leaving that same hand at the same location as a closed gloved fist (empty). Preserve every other part of the character, exact pose, scale, proportions, colors and transparent background. Remove colored haze outside the silhouette to get clean transparent sprite edges. Do not add any weapon or new objects.
+
+**ExplorerV2 final edit**
+> Edit this EXACT character sprite. Remove ONLY the backpack body and rolled sleeping mat behind his left shoulder and left torso (viewer left). Preserve leather shoulder straps worn over his shirt. Keep exact face, helmet, empty fist, clothing, boots, pose, proportions and pixel placement. The game will draw an interchangeable backpack behind him. Truly transparent background, clean alpha edges, no haze outside silhouette. Do not add objects.
+
+**BaseV2**
+> Use attached image ONLY as style reference. Create a portrait 2D cartoon mobile game background matching the leftmost phone's cave base exactly in mood: cozy wooden miner workshop under dark blue cave arch, amber lanterns, distant purple-blue mountain view on upper right, wooden workbench left, small purple crystal clusters by floor, stone platform foreground bottom center reserved for character. Charming clean rounded shapes, rich painterly cartoon detail, dramatic amber and blue light. No people, no pets, no UI, no typography, no phone, no border. Portrait composition with darker upper fifth to hold game HUD.
