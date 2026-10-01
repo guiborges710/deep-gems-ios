@@ -36,8 +36,8 @@ struct FacetedGemArt: View {
                     p.addLine(to: .init(x: g.size.width, y: g.size.height * 0.25)); p.closeSubpath()
                 }.fill(.white.opacity(cuts > 1 ? 0.18 : 0))
             }
-        }.clipShape(CutGemShape(cuts: cuts))
-            .overlay(CutGemShape(cuts: cuts).stroke(.white.opacity(cuts > 0 ? 0.35 : 0), lineWidth: 1))
+        }.mask(Image(uiImage: GameArtwork.gem(kind)).resizable().scaledToFit())
+            .clipShape(CutGemShape(cuts: cuts))
             .shadow(color: kind.color.opacity(0.45), radius: 18)
             .accessibilityLabel("\(kind.name), \(cuts) facetas lapidadas")
     }

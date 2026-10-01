@@ -19,7 +19,7 @@ struct MineView: View {
                         meter(value: e.carried.count, maximum: game.state.capacity, symbol: "backpack.fill", tint: .deepGold)
                     }
                     SpriteView(scene: game.mineScene, isPaused: false, preferredFramesPerSecond: 60)
-                        .frame(maxWidth: .infinity).frame(height: max(80, geometry.size.height - (geometry.size.height < 650 ? 395 : 410)))
+                        .frame(maxWidth: .infinity).frame(height: max(80, geometry.size.height - (geometry.size.height < 650 ? 308 : 320)))
                         .clipShape(RoundedRectangle(cornerRadius: 18))
                         .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.deepGold.opacity(0.3)))
                         .accessibilityLabel("Mina. Toque nos blocos dourados ao lado do explorador ou use as setas.")

@@ -116,11 +116,13 @@ struct CollectionView: View {
 }
 
 struct CharacterView: View {
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var game: GameStore
     @State private var resetConfirmation = false
     var body: some View {
         ScrollView {
             VStack(spacing: 18) {
+                Button { dismiss() } label: { Label("Voltar à base", systemImage: "chevron.left").font(.caption.bold()) }.frame(maxWidth: .infinity, alignment: .leading)
                 ScreenTitle(title: "Seu explorador", subtitle: "Nível \(game.state.level) • \(game.state.experience) XP")
                 BaseShowcase(outfit: game.state.outfit, pickaxe: game.state.equippedPickaxe, backpackLevel: game.state.backpackLevel, staminaLevel: game.state.staminaLevel).frame(height: 350)
                 Text("Guarda-roupa").font(.system(.title2, design: .serif, weight: .bold)).frame(maxWidth: .infinity, alignment: .leading)
