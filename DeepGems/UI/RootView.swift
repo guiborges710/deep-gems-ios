@@ -16,7 +16,7 @@ struct RootView: View {
                 }.padding(24)
             } else {
                 TabView(selection: $tab) {
-                    NavigationStack { BaseView(onExplore: { game.start(); if game.state.expedition != nil { tab = 1 } }) }
+                    NavigationStack { BaseView(onExplore: { game.start(); if game.state.expedition != nil { tab = 1 } }, onShop: { tab = 4 }) }
                         .tabItem { Label("Base", systemImage: "house.fill") }.tag(0)
                     NavigationStack { MineView() }
                         .tabItem { Label("Mina", systemImage: "mountain.2.fill") }.tag(1)
@@ -24,8 +24,8 @@ struct RootView: View {
                         .tabItem { Label("Oficina", systemImage: "hammer.fill") }.tag(2)
                     NavigationStack { CollectionView() }
                         .tabItem { Label("Coleção", systemImage: "diamond.fill") }.tag(3)
-                    NavigationStack { CharacterView() }
-                        .tabItem { Label("Personagem", systemImage: "person.fill") }.tag(4)
+                    NavigationStack { EquipmentView() }
+                        .tabItem { Label("Loja", systemImage: "bag.fill") }.tag(4)
                 }
                 .toolbarBackground(Color.deepBackground, for: .tabBar)
                 .safeAreaInset(edge: .top) {
@@ -55,6 +55,7 @@ struct RootView: View {
 struct BaseView: View {
     @EnvironmentObject private var game: GameStore
     let onExplore: () -> Void
+    let onShop: () -> Void
     @State private var tutorial = false
     var body: some View {
         ScrollView {
@@ -69,37 +70,31 @@ struct BaseView: View {
                     ProgressView(value: game.state.levelProgress).tint(.deepTeal)
                     Text("\(game.state.experience) / \(game.state.threshold(for: game.state.level + 1)) XP").font(.caption).foregroundStyle(.secondary)
                 }
-                ZStack {
-                    RoundedRectangle(cornerRadius: 24).fill(LinearGradient(colors: [Color.deepPanel, .deepTeal.opacity(0.08)], startPoint: .top, endPoint: .bottom))
-                    HStack { GemArt(kind: .amethyst).frame(width: 50).offset(y: 65); ExplorerArt(outfit: game.state.outfit); GemArt(kind: .quartz).frame(width: 40).offset(y: 75) }.padding(20)
-                }.frame(height: 260)
+                BaseShowcase(outfit: game.state.outfit, pickaxe: game.state.equippedPickaxe).frame(height: 390)
                 Button(action: onExplore) { Label(game.state.expedition == nil ? "Explorar a mina" : "Continuar expedição", systemImage: "mountain.2.fill") }.buttonStyle(GoldButtonStyle())
                 HStack {
                     Label("Recorde: \(game.state.deepestRow) m", systemImage: "arrow.down")
                     Spacer()
                     Text("\(game.state.inventory.count) pedras na oficina")
                 }.font(.caption).foregroundStyle(.secondary)
-                VStack(spacing: 12) {
-                    ForEach(Upgrade.allCases) { kind in
-                        Panel {
-                            HStack(alignment: .center) {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text("\(kind.name) • Nv. \(game.state.upgradeLevel(kind))").font(.headline)
-                                    Text(upgradeDescription(kind)).font(.caption).foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Button { game.upgrade(kind) } label: {
-                                    VStack(spacing: 4) { Image(systemName: "arrow.up.circle.fill").font(.title2); Text("\(game.state.upgradeCost(kind)) ●").font(.caption.bold()) }
-                                }.disabled(game.state.coins < game.state.upgradeCost(kind) || game.state.expedition != nil)
-                            }
+                Button(action: onShop) {
+                    HStack {
+                        PickaxeArt(kind: .amethyst).frame(width: 55, height: 55)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Conheça sua próxima picareta").font(.headline)
+                            Text("Equipamentos e melhorias na Loja").font(.caption).foregroundStyle(.secondary)
                         }
-                    }
-                }
-                if game.state.expedition != nil { Text("Volte à base para melhorar seus equipamentos.").font(.caption).foregroundStyle(.secondary) }
+                        Spacer(minLength: 4)
+                        Image(systemName: "chevron.right")
+                    }.padding(14).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 18))
+                }.buttonStyle(.plain)
+                NavigationLink { CharacterView() } label: {
+                    Label("Personalizar explorador", systemImage: "person.crop.circle").font(.headline)
+                }.padding(8)
                 Button("Como jogar") { tutorial = true }.padding(.bottom)
             }.padding(20)
         }.background(Color.deepBackground).toolbar(.hidden, for: .navigationBar)
-            .onAppear { if !game.state.hasSeenTutorial { tutorial = true } }
+            .onAppear { if !game.state.hasSeenTutorial && !ProcessInfo.processInfo.arguments.contains("-deepgems-screenshot") { tutorial = true } }
             .sheet(isPresented: $tutorial) {
                 VStack(alignment: .leading, spacing: 24) {
                     ScreenTitle(title: "Sua primeira descoberta", subtitle: "Explore. Lapide. Evolua.")

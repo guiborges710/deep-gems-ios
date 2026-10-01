@@ -1,6 +1,6 @@
 # DeepGems ⛏️💎
 
-Protótipo iOS de exploração, lapidação e evolução. SwiftUI nas telas; SpriteKit na mina. Arte geométrica desenhada em código, inspirada na direção de cores dos conceitos visuais — ainda não são as ilustrações finais.
+Protótipo iOS de exploração, lapidação e evolução. SwiftUI nas telas; SpriteKit na mina. Arte 2D ilustrada na base, personagem, pedras e picaretas; SpriteKit renderiza a mina com partículas e golpes. O jogo continua nativo Swift e abre diretamente no Xcode, sem Unity.
 
 ## Abrir no Mac
 
@@ -29,9 +29,23 @@ Abra o `.xcodeproj`, não o Package.swift. O package serve para os testes indepe
 5. Volte à base e abra Oficina. Selecione uma pedra bruta e toque Lapidar.
 6. Alinhe a linha dourada com a pontilhada, depois deslize verticalmente ou toque Executar corte.
 7. Feche e reabra durante a lapidação: cortes concluídos devem persistir.
-8. Termine, venda a peça e confira moedas. Com 60 moedas, compre a primeira melhoria na Base.
-9. Confira Coleção e Personagem. Roupas extras desbloqueiam nos níveis 3 e 6.
+8. Termine, venda a peça e confira moedas. Na aba Loja → Melhorias, compre a primeira melhoria com 60 moedas.
+9. Confira Coleção e abra Personalizar explorador na Base. Roupas extras desbloqueiam nos níveis 3 e 6.
 10. Retorne à mina: uma nova expedição começa com energia cheia.
+
+## Nova versão visual 0.2
+
+- Base com cenário ilustrado, personagem e picareta equipada.
+- Aba **Loja** separada, com Picaretas e Melhorias; a Base aponta para a loja.
+- Ferro do Explorador (inicial), Garra de Cobre (180 moedas, +2 força), Coração de Ametista (650 moedas, +5 força).
+- Compra pede confirmação, desconta moedas uma única vez e equipa o item. Itens já obtidos podem ser reequipados sem custo.
+- Bônus de item soma à força das melhorias existentes. Força altera os golpes necessários, sem mudança nos preços das pedras.
+- Picareta aparece no personagem e na mina. Impactos têm cor e fragmentos específicos do item.
+- Personalização continua acessível pela Base. Roupas usam uma recoloração seletiva da ilustração; são variantes simples, não sprites separados animados.
+- Saves do MVP anterior são compatíveis: novos campos assumem a picareta de ferro; moedas, equipamentos melhorados, inventário e expedição são preservados.
+- Os assets originais são incluídos no catálogo; as regiões das folhas de picaretas e pedras são recortadas em memória pelo app.
+
+A direção visual foi aplicada ao app real, mas ainda não há animações de caminhada quadro a quadro, cenários de biomas ou uma simulação visual de facetas sendo removidas na lapidação. A arte da pedra é a mesma base com tratamento de brilho para estado lapidado. Os screenshots de conceito anteriores não são capturas do app.
 
 ## Conteúdo
 

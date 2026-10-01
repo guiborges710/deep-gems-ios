@@ -147,8 +147,35 @@ public struct GameState: Codable, Equatable {
     public var outfit: Outfit = .teal
     public var expedition: Expedition?
     public var cutting: CuttingSession?
+    public var ownedPickaxes: [PickaxeKind] = [.iron]
+    public var equippedPickaxe: PickaxeKind = .iron
+    public var miningPower: Int { pickaxeLevel + equippedPickaxe.bonus }
     public var hasSeenTutorial = false
     public init() {}
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion, coins, experience, pickaxeLevel, backpackLevel, staminaLevel,
+             deepestRow, inventory, collection, outfit, expedition, cutting, hasSeenTutorial,
+             ownedPickaxes, equippedPickaxe
+    }
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try values.decode(Int.self, forKey: .schemaVersion)
+        coins = try values.decode(Int.self, forKey: .coins)
+        experience = try values.decode(Int.self, forKey: .experience)
+        pickaxeLevel = try values.decode(Int.self, forKey: .pickaxeLevel)
+        backpackLevel = try values.decode(Int.self, forKey: .backpackLevel)
+        staminaLevel = try values.decode(Int.self, forKey: .staminaLevel)
+        deepestRow = try values.decode(Int.self, forKey: .deepestRow)
+        inventory = try values.decode([Gem].self, forKey: .inventory)
+        collection = try values.decode([String: CollectionEntry].self, forKey: .collection)
+        outfit = try values.decode(Outfit.self, forKey: .outfit)
+        expedition = try values.decodeIfPresent(Expedition.self, forKey: .expedition)
+        cutting = try values.decodeIfPresent(CuttingSession.self, forKey: .cutting)
+        hasSeenTutorial = try values.decode(Bool.self, forKey: .hasSeenTutorial)
+        // Existing Swift MVP saves keep all progress; new equipment fields default to iron.
+        ownedPickaxes = try values.decodeIfPresent([PickaxeKind].self, forKey: .ownedPickaxes) ?? [.iron]
+        equippedPickaxe = try values.decodeIfPresent(PickaxeKind.self, forKey: .equippedPickaxe) ?? .iron
+    }
     // Increasing thresholds without a fixed maximum player level.
     public var level: Int { Int((sqrt(1 + Double(experience) / 10) - 1) / 2) }
     public func threshold(for level: Int) -> Int { 40 * level * (level + 1) }

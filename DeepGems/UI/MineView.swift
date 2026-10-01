@@ -23,6 +23,12 @@ struct MineView: View {
                     SpriteView(scene: game.mineScene, isPaused: scenePhase != .active, preferredFramesPerSecond: 30)
                         .frame(height: 390).clipShape(RoundedRectangle(cornerRadius: 18))
                         .accessibilityLabel("Mina. Use os controles abaixo para mover ou escavar.")
+                    HStack {
+                        PickaxeArt(kind: game.state.equippedPickaxe).frame(width: 36, height: 36)
+                        Text(game.state.equippedPickaxe.name).font(.caption.bold())
+                        Spacer()
+                        Text("Força \(game.state.miningPower)").font(.caption.bold()).foregroundStyle(Color.deepGold)
+                    }
                     Text("Toque em um bloco com borda dourada. Cada golpe usa 1 de energia.").font(.caption).foregroundStyle(.secondary)
                     HStack(spacing: 12) {
                         direction("arrow.left", name: "Escavar ou andar para a esquerda", column: -1, row: 0)

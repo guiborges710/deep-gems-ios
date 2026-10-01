@@ -27,7 +27,7 @@ public enum GameEngine {
         let tile = expedition.tiles[index]
         if !tile.isEmpty {
             guard expedition.energy > 0 else { throw GameError.message("Energia esgotada. Volte à base para guardar o saque.") }
-            let damage = state.pickaxeLevel
+            let damage = state.miningPower
             if tile.remaining <= damage, tile.gem != nil, expedition.carried.count >= state.capacity {
                 throw GameError.message("Mochila cheia! Volte à base antes de coletar outra pedra.")
             }
@@ -69,6 +69,21 @@ public enum GameEngine {
         guard state.upgradeLevel(kind) < 1000 else { throw GameError.message("Limite de equipamento desta versão atingido.") }
         state.coins -= cost
         switch kind { case .pickaxe: state.pickaxeLevel += 1; case .backpack: state.backpackLevel += 1; case .stamina: state.staminaLevel += 1 }
+    }
+
+    public static func buyPickaxe(state: inout GameState, kind: PickaxeKind) throws {
+        guard state.expedition == nil else { throw GameError.message("Volte à base para trocar seus equipamentos.") }
+        guard !state.ownedPickaxes.contains(kind) else { throw GameError.message("Você já possui esta picareta.") }
+        guard state.coins >= kind.price else { throw GameError.message("Faltam \(kind.price - state.coins) moedas para esta picareta.") }
+        state.coins -= kind.price
+        state.ownedPickaxes.append(kind)
+        state.equippedPickaxe = kind
+    }
+
+    public static func equipPickaxe(state: inout GameState, kind: PickaxeKind) throws {
+        guard state.expedition == nil else { throw GameError.message("Volte à base para trocar seus equipamentos.") }
+        guard state.ownedPickaxes.contains(kind) else { throw GameError.message("Compre esta picareta antes de equipar.") }
+        state.equippedPickaxe = kind
     }
 
     public static func sell(state: inout GameState, gemID: UUID) throws {

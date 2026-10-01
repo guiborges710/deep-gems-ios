@@ -49,7 +49,12 @@ final class GameStore: ObservableObject {
     func start() { change { try GameEngine.startExpedition(state: &$0) } }
     func mine(at position: GridPosition) {
         let before = state.expedition?.carried.count ?? 0
+        let beforeEnergy = state.expedition?.energy
         change { try GameEngine.act(state: &$0, at: position) }
+        if let beforeEnergy, let afterEnergy = state.expedition?.energy, afterEnergy < beforeEnergy {
+            mineScene.strike(at: position)
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
         if (state.expedition?.carried.count ?? 0) > before {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         }
@@ -60,6 +65,8 @@ final class GameStore: ObservableObject {
     }
     func returnToBase() { change { GameEngine.returnToBase(state: &$0) } }
     func upgrade(_ kind: Upgrade) { change { try GameEngine.upgrade(state: &$0, kind: kind) } }
+    func buyPickaxe(_ kind: PickaxeKind) { change { try GameEngine.buyPickaxe(state: &$0, kind: kind) } }
+    func equipPickaxe(_ kind: PickaxeKind) { change { try GameEngine.equipPickaxe(state: &$0, kind: kind) } }
     func sell(_ gem: Gem) { change { try GameEngine.sell(state: &$0, gemID: gem.id) } }
     func beginCutting(_ gem: Gem) { change { try GameEngine.beginCutting(state: &$0, gemID: gem.id) } }
     func cut(angle: Double, accuracy: Double) {
@@ -76,5 +83,5 @@ final class GameStore: ObservableObject {
             syncScene()
         } catch { message = error.localizedDescription }
     }
-    private func syncScene() { mineScene.render(expedition: state.expedition, outfit: state.outfit) }
+    private func syncScene() { mineScene.render(expedition: state.expedition, outfit: state.outfit, pickaxe: state.equippedPickaxe) }
 }

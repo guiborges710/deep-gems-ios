@@ -1,10 +1,16 @@
 import SpriteKit
 import UIKit
 
+@MainActor
 final class MineScene: SKScene {
     var onSelect: ((GridPosition) -> Void)?
     private var expedition: Expedition?
     private var outfit: Outfit = .teal
+    private var pickaxe: PickaxeKind = .iron
+    private var weaponNode: SKSpriteNode?
+    private var crystalTextures: [GemKind: SKTexture] = [:]
+    private var weaponTextures: [PickaxeKind: SKTexture] = [:]
+    private var explorerTextures: [Outfit: SKTexture] = [:]
     private var visibleFirstRow = 0
     private var tileSize: CGFloat = 45
     private var boardOrigin = CGPoint.zero
@@ -17,8 +23,8 @@ final class MineScene: SKScene {
     }
     required init?(coder: NSCoder) { fatalError("Use init(size:)") }
     override func didChangeSize(_ oldSize: CGSize) { redraw() }
-    func render(expedition: Expedition?, outfit: Outfit) {
-        self.expedition = expedition; self.outfit = outfit
+    func render(expedition: Expedition?, outfit: Outfit, pickaxe: PickaxeKind) {
+        self.expedition = expedition; self.outfit = outfit; self.pickaxe = pickaxe
         redraw()
     }
     private func redraw() {
@@ -36,15 +42,27 @@ final class MineScene: SKScene {
             rect.strokeColor = adjacent.contains(tile.position) ? .systemOrange : UIColor(white: 0.35, alpha: 0.2)
             rect.lineWidth = adjacent.contains(tile.position) ? 2 : 1
             addChild(rect)
+            if !tile.isEmpty {
+                let fissure = CGMutablePath()
+                fissure.move(to: CGPoint(x: -tileSize * 0.35, y: tileSize * 0.24))
+                fissure.addLine(to: CGPoint(x: -tileSize * 0.06, y: tileSize * 0.16))
+                fissure.addLine(to: CGPoint(x: tileSize * 0.12, y: -tileSize * 0.1))
+                fissure.addLine(to: CGPoint(x: tileSize * 0.3, y: -tileSize * 0.15))
+                let crack = SKShapeNode(path: fissure)
+                crack.position = point; crack.strokeColor = UIColor.black.withAlphaComponent(0.3)
+                crack.lineWidth = tile.remaining < tile.hardness ? 3 : 1
+                addChild(crack)
+                let ridge = SKShapeNode(rectOf: CGSize(width: tileSize - 16, height: 2), cornerRadius: 1)
+                ridge.fillColor = UIColor.white.withAlphaComponent(0.07); ridge.strokeColor = .clear
+                ridge.position = CGPoint(x: point.x, y: point.y + tileSize * 0.34)
+                addChild(ridge)
+            }
             if let gem = tile.gem, !tile.isEmpty {
-                let path = CGMutablePath()
-                path.move(to: CGPoint(x: 0, y: tileSize * 0.26))
-                path.addLine(to: CGPoint(x: tileSize * 0.19, y: 0))
-                path.addLine(to: CGPoint(x: 0, y: -tileSize * 0.25))
-                path.addLine(to: CGPoint(x: -tileSize * 0.19, y: 0)); path.closeSubpath()
-                let crystal = SKShapeNode(path: path)
-                crystal.fillColor = gem.kind.uiColor; crystal.strokeColor = .white.withAlphaComponent(0.6)
-                crystal.position = point; crystal.glowWidth = 2
+                let texture = crystalTextures[gem.kind] ?? SKTexture(image: GameArtwork.gem(gem.kind))
+                crystalTextures[gem.kind] = texture
+                let crystal = SKSpriteNode(texture: texture)
+                crystal.size = CGSize(width: tileSize * 0.64, height: tileSize * 0.7)
+                crystal.position = point; crystal.zPosition = 2
                 addChild(crystal)
             }
             if !tile.isEmpty && tile.remaining < tile.hardness {
@@ -55,19 +73,41 @@ final class MineScene: SKScene {
             }
         }
         let player = SKNode()
-        player.position = center(for: expedition.player)
-        let body = SKShapeNode(rectOf: CGSize(width: tileSize * 0.4, height: tileSize * 0.4), cornerRadius: 6)
-        body.fillColor = outfit.uiColor; body.strokeColor = .clear; body.position.y = -tileSize * 0.1
+        player.position = center(for: expedition.player); player.zPosition = 5
+        let explorerTexture = explorerTextures[outfit] ?? SKTexture(image: GameArtwork.explorer(outfit))
+        explorerTextures[outfit] = explorerTexture
+        let body = SKSpriteNode(texture: explorerTexture)
+        body.size = CGSize(width: tileSize * 0.75, height: tileSize * 1.13)
+        body.position.y = tileSize * 0.17
         player.addChild(body)
-        let head = SKShapeNode(circleOfRadius: tileSize * 0.15)
-        head.fillColor = UIColor(red: 0.94, green: 0.71, blue: 0.48, alpha: 1); head.strokeColor = .clear
-        head.position.y = tileSize * 0.14; player.addChild(head)
-        let helmet = SKShapeNode(rectOf: CGSize(width: tileSize * 0.4, height: tileSize * 0.14), cornerRadius: 4)
-        helmet.fillColor = .systemYellow; helmet.strokeColor = .clear; helmet.position.y = tileSize * 0.24
-        player.addChild(helmet)
-        let lamp = SKShapeNode(circleOfRadius: 3); lamp.fillColor = .white; lamp.strokeColor = .clear
-        lamp.glowWidth = 4; lamp.position.y = tileSize * 0.25; player.addChild(lamp)
+        let weaponTexture = weaponTextures[pickaxe] ?? SKTexture(image: GameArtwork.pickaxe(pickaxe))
+        weaponTextures[pickaxe] = weaponTexture
+        let weapon = SKSpriteNode(texture: weaponTexture)
+        weapon.size = CGSize(width: tileSize * 0.7, height: tileSize * 0.7)
+        weapon.anchorPoint = CGPoint(x: 0.18, y: 0.15)
+        weapon.position = CGPoint(x: tileSize * 0.15, y: -tileSize * 0.05)
+        weapon.zRotation = -0.35; weapon.zPosition = 6
+        player.addChild(weapon); weaponNode = weapon
         addChild(player)
+        // Idle motion is intentionally subtle; frame-by-frame character animation is a later asset pass.
+        body.run(.repeatForever(.sequence([.moveBy(x: 0, y: 1.5, duration: 1), .moveBy(x: 0, y: -1.5, duration: 1)])))
+    }
+    func strike(at position: GridPosition) {
+        guard expedition != nil else { return }
+        let point = center(for: position)
+        weaponNode?.run(.sequence([.rotate(byAngle: 0.8, duration: 0.06), .rotate(byAngle: -1.1, duration: 0.09), .rotate(byAngle: 0.3, duration: 0.1)]))
+        let flash = SKShapeNode(circleOfRadius: tileSize * 0.25)
+        flash.position = point; flash.fillColor = pickaxe.impactColor.withAlphaComponent(0.7)
+        flash.strokeColor = .clear; flash.zPosition = 10
+        addChild(flash)
+        flash.run(.sequence([.group([.scale(to: 1.8, duration: 0.2), .fadeOut(withDuration: 0.2)]), .removeFromParent()]))
+        for index in 0..<8 {
+            let chip = SKShapeNode(circleOfRadius: pickaxe == .amethyst ? 2.5 : 1.5)
+            chip.position = point; chip.fillColor = pickaxe.impactColor; chip.strokeColor = .clear; chip.zPosition = 11
+            let angle = CGFloat(index) * .pi / 4
+            addChild(chip)
+            chip.run(.sequence([.group([.moveBy(x: cos(angle) * tileSize * 0.5, y: sin(angle) * tileSize * 0.5, duration: 0.3), .fadeOut(withDuration: 0.3)]), .removeFromParent()]))
+        }
     }
     private func center(for position: GridPosition) -> CGPoint {
         CGPoint(x: boardOrigin.x + (CGFloat(position.column) + 0.5) * tileSize,

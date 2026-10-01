@@ -60,6 +60,10 @@ public final class SaveStore {
               (1...1000).contains(state.staminaLevel), (0...10_000_000).contains(state.deepestRow) else {
             throw GameError.message("Formato ou valores de progresso inválidos.")
         }
+        guard state.ownedPickaxes.contains(.iron), state.ownedPickaxes.contains(state.equippedPickaxe),
+              Set(state.ownedPickaxes).count == state.ownedPickaxes.count else {
+            throw GameError.message("Equipamentos inválidos no arquivo de progresso.")
+        }
         var allGems = state.inventory
         if let expedition = state.expedition {
             guard state.cutting == nil, (0...state.maximumEnergy).contains(expedition.energy),

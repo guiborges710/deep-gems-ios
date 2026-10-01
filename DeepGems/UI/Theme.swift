@@ -39,23 +39,13 @@ struct GemArt: View {
     let kind: GemKind
     var polished = false
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                GemShape().fill(LinearGradient(colors: [kind.color.opacity(0.5), kind.color, kind.color.opacity(0.35)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                GemShape().stroke(kind.color.opacity(0.8), lineWidth: 2)
-                Path { path in
-                    let width = geometry.size.width; let height = geometry.size.height
-                    path.move(to: CGPoint(x: width * 0.12, y: height * 0.24))
-                    path.addLine(to: CGPoint(x: width * 0.88, y: height * 0.24))
-                    path.move(to: CGPoint(x: width * 0.5, y: 0))
-                    path.addLine(to: CGPoint(x: width * 0.34, y: height * 0.48))
-                    path.addLine(to: CGPoint(x: width * 0.5, y: height))
-                    path.addLine(to: CGPoint(x: width * 0.68, y: height * 0.48))
-                    path.addLine(to: CGPoint(x: width * 0.5, y: 0))
-                }.stroke(.white.opacity(polished ? 0.65 : 0.25), lineWidth: 2)
-                if polished { Image(systemName: "sparkle").font(.title).foregroundStyle(.white).offset(x: geometry.size.width * 0.25, y: -geometry.size.height * 0.25) }
+        Image(uiImage: GameArtwork.gem(kind)).resizable().scaledToFit()
+            .brightness(polished ? 0.07 : -0.07)
+            .shadow(color: kind.color.opacity(polished ? 0.5 : 0.18), radius: polished ? 18 : 6)
+            .overlay(alignment: .topTrailing) {
+                if polished { Image(systemName: "sparkle").font(.title3).foregroundStyle(.white) }
             }
-        }.aspectRatio(0.85, contentMode: .fit).shadow(color: kind.color.opacity(0.35), radius: 16)
+            .accessibilityLabel("\(kind.name), \(polished ? "lapidada" : "bruta")")
     }
 }
 

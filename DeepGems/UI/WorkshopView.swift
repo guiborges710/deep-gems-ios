@@ -81,7 +81,7 @@ struct CharacterView: View {
         ScrollView {
             VStack(spacing: 18) {
                 ScreenTitle(title: "Seu explorador", subtitle: "Nível \(game.state.level) • \(game.state.experience) XP")
-                ExplorerArt(outfit: game.state.outfit).padding(.vertical, 20)
+                ExplorerShowcase(outfit: game.state.outfit, pickaxe: game.state.equippedPickaxe).frame(height: 310).padding(.vertical, 20)
                 Text("Guarda-roupa").font(.title2.bold()).frame(maxWidth: .infinity, alignment: .leading)
                 ForEach(Outfit.allCases) { outfit in
                     Panel {
@@ -95,7 +95,7 @@ struct CharacterView: View {
                     }
                 }
                 Panel {
-                    Text("Protótipo 0.1").font(.headline)
+                    Text("Protótipo 0.2").font(.headline)
                     Text("Progresso salvo neste aparelho. Esta versão ainda não tem compras, anúncios, conta online ou multiplayer.").font(.caption).foregroundStyle(.secondary)
                 }
                 Button("Começar novo jogo", role: .destructive) { resetConfirmation = true }.padding(.vertical)
