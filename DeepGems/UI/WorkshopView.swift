@@ -4,44 +4,79 @@ struct WorkshopView: View {
     @EnvironmentObject private var game: GameStore
     @State private var gemToSell: Gem?
     @State private var filter = 0
-    private var gems: [Gem] { game.state.inventory.filter { filter == 0 || (filter == 1 ? $0.cutQuality == nil : $0.cutQuality != nil) } }
+    @State private var sort = 0
+    @State private var selection: Set<UUID> = []
+    @State private var bulkConfirmation = false
+    private var gems: [Gem] {
+        let filtered = game.state.inventory.filter { filter == 0 || (filter == 1 ? $0.cutQuality == nil : $0.cutQuality != nil) }
+        return filtered.sorted { sort == 0 ? $0.value > $1.value : $0.kind.rawValue < $1.kind.rawValue }
+    }
+    private var selectedGems: [Gem] { game.state.inventory.filter { selection.contains($0.id) && $0.id != game.state.cutting?.gemID } }
+    private var selectedTotal: Int { selectedGems.reduce(0) { $0 + $1.value } }
     var body: some View {
         ScrollView {
-            VStack(spacing: 18) {
-                ScreenTitle(title: "Sua oficina", subtitle: "Transforme descobertas em peças únicas.")
-                Panel { Label("\(game.state.coins) moedas", systemImage: "circle.fill").foregroundStyle(Color.deepGold).font(.headline) }
+            VStack(spacing: 16) {
+                ScreenTitle(title: "Sua oficina", subtitle: "Lapide, organize e transforme seu saque em moedas.")
+                Label("\(game.state.coins) moedas", systemImage: "circle.fill").foregroundStyle(Color.deepGold).font(.headline)
                 Picker("Pedras", selection: $filter) { Text("Todas").tag(0); Text("Brutas").tag(1); Text("Lapidadas").tag(2) }.pickerStyle(.segmented)
-                if gems.isEmpty {
-                    ContentUnavailableView("Nenhuma pedra aqui", systemImage: "diamond", description: Text("Explore a mina e volte à base para trazer suas descobertas."))
+                HStack {
+                    Picker("Ordenar", selection: $sort) { Text("Maior valor").tag(0); Text("Tipo de pedra").tag(1) }.pickerStyle(.menu)
+                    Spacer()
+                    Button("Selecionar brutas") { selection = Set(gems.filter { $0.cutQuality == nil && $0.id != game.state.cutting?.gemID }.map(\.id)) }.font(.caption.bold())
                 }
-                ForEach(gems) { gem in
-                    Panel {
-                        HStack(spacing: 18) {
-                            GemArt(kind: gem.kind, polished: gem.cutQuality != nil).frame(width: 55, height: 65)
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(gem.kind.name).font(.headline)
-                                Text("\(gem.carats) ct • Pureza \(gem.purity)%").font(.caption).foregroundStyle(.secondary)
-                                Text(gem.qualityName + (gem.cutQuality.map { " • \($0)%" } ?? "")).font(.caption).foregroundStyle(gem.kind.color)
-                                Text("Valor: \(gem.value) moedas").font(.subheadline.bold()).foregroundStyle(Color.deepGold)
+                if gems.isEmpty { ContentUnavailableView("Nenhuma pedra aqui", systemImage: "diamond", description: Text("Explore e volte à base para guardar suas descobertas.")) }
+                ForEach(GemKind.allCases.filter { kind in gems.contains { $0.kind == kind } }.sorted { a, b in
+                    sort == 0 ? (gems.filter { $0.kind == a }.map(\.value).max() ?? 0) > (gems.filter { $0.kind == b }.map(\.value).max() ?? 0) : a.rawValue < b.rawValue
+                }) { kind in
+                    let group = gems.filter { $0.kind == kind }
+                    DisclosureGroup {
+                        ForEach(group) { gem in gemRow(gem) }
+                    } label: {
+                        HStack(spacing: 14) {
+                            GemArt(kind: kind).frame(width: 45, height: 55)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("\(kind.name) • \(group.count)").font(.headline)
+                                Text("Total \(group.reduce(0) { $0 + $1.value }) moedas").font(.caption).foregroundStyle(Color.deepGold)
                             }
-                            Spacer(minLength: 0)
                         }
-                        HStack {
-                            if gem.cutQuality == nil {
-                                Button("Lapidar") { game.beginCutting(gem) }.buttonStyle(.borderedProminent).disabled(game.state.expedition != nil)
-                            }
-                            Spacer()
-                            Button("Vender") { gemToSell = gem }.buttonStyle(.bordered)
-                        }.padding(.top, 10)
-                    }
+                    }.padding(14).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 18))
                 }
-                Text("Vendas são feitas para o próprio jogo. A coleção mantém o registro das suas descobertas.").font(.caption).foregroundStyle(.secondary)
             }.padding(20)
         }.background(Color.deepBackground).toolbar(.hidden, for: .navigationBar)
+            .safeAreaInset(edge: .bottom) {
+                if !selectedGems.isEmpty {
+                    VStack(spacing: 8) {
+                        HStack { Text("\(selectedGems.count) pedras • \(selectedTotal) moedas").font(.caption.bold()); Spacer(); Button("Limpar") { selection.removeAll() }.font(.caption) }
+                        Button("Vender selecionadas") { bulkConfirmation = true }.buttonStyle(GoldButtonStyle())
+                    }.padding(14).background(Color.deepBackground)
+                }
+            }
             .alert("Vender esta pedra?", isPresented: Binding(get: { gemToSell != nil }, set: { if !$0 { gemToSell = nil } })) {
                 Button("Cancelar", role: .cancel) { gemToSell = nil }
-                Button("Vender por \(gemToSell?.value ?? 0)") { if let gem = gemToSell { game.sell(gem) }; gemToSell = nil }
-            } message: { Text("Você receberá moedas para melhorar seus equipamentos.") }
+                Button("Vender por \(gemToSell?.value ?? 0)") { if let gem = gemToSell { game.sell(gem); selection.remove(gem.id) }; gemToSell = nil }
+            } message: { Text("A coleção mantém o registro da descoberta.") }
+            .confirmationDialog("Vender \(selectedGems.count) pedras por \(selectedTotal) moedas?", isPresented: $bulkConfirmation, titleVisibility: .visible) {
+                Button("Confirmar venda • \(selectedTotal) moedas") { game.sellBatch(Set(selectedGems.map(\.id))); selection.removeAll() }
+            }
+    }
+    private func gemRow(_ gem: Gem) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Button { if selection.contains(gem.id) { selection.remove(gem.id) } else { selection.insert(gem.id) } } label: {
+                    Image(systemName: selection.contains(gem.id) ? "checkmark.circle.fill" : "circle").font(.title2)
+                }.disabled(gem.id == game.state.cutting?.gemID).accessibilityLabel("Selecionar \(gem.kind.name), \(gem.value) moedas")
+                GemArt(kind: gem.kind, polished: gem.cutQuality != nil).frame(width: 35, height: 45)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(gem.carats) ct • pureza \(gem.purity)%").font(.caption)
+                    Text("\(gem.qualityName) • \(gem.value) moedas").font(.caption.bold()).foregroundStyle(Color.deepGold)
+                }
+            }
+            HStack {
+                if gem.cutQuality == nil { Button("Lapidar") { game.beginCutting(gem) }.buttonStyle(.borderedProminent).disabled(game.state.expedition != nil) }
+                Spacer()
+                Button("Vender") { gemToSell = gem }.buttonStyle(.bordered).disabled(gem.id == game.state.cutting?.gemID)
+            }
+        }.padding(.vertical, 12)
     }
 }
 
@@ -81,21 +116,29 @@ struct CharacterView: View {
         ScrollView {
             VStack(spacing: 18) {
                 ScreenTitle(title: "Seu explorador", subtitle: "Nível \(game.state.level) • \(game.state.experience) XP")
-                ExplorerShowcase(outfit: game.state.outfit, pickaxe: game.state.equippedPickaxe).frame(height: 310).padding(.vertical, 20)
-                Text("Guarda-roupa").font(.title2.bold()).frame(maxWidth: .infinity, alignment: .leading)
-                ForEach(Outfit.allCases) { outfit in
-                    Panel {
-                        HStack {
-                            Image(systemName: "tshirt.fill").font(.largeTitle).foregroundStyle(outfit.color)
-                            VStack(alignment: .leading) { Text(outfit.name).font(.headline); Text("Desbloqueia no nível \(outfit.requiredLevel)").font(.caption).foregroundStyle(.secondary) }
-                            Spacer()
-                            Button(game.state.outfit == outfit ? "Equipado" : "Equipar") { game.equip(outfit) }
-                                .disabled(game.state.level < outfit.requiredLevel || game.state.outfit == outfit)
-                        }
+                BaseShowcase(outfit: game.state.outfit, pickaxe: game.state.equippedPickaxe, backpackLevel: game.state.backpackLevel, staminaLevel: game.state.staminaLevel).frame(height: 350)
+                Text("Guarda-roupa").font(.system(.title2, design: .serif, weight: .bold)).frame(maxWidth: .infinity, alignment: .leading)
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                    ForEach(Outfit.allCases) { outfit in
+                        Button { game.equip(outfit) } label: {
+                            VStack(spacing: 8) {
+                                Image(uiImage: GameArtwork.explorer(outfit)).resizable().scaledToFit().frame(height: 105)
+                                Text(outfit.name).font(.caption.bold()).lineLimit(2)
+                                if game.state.level < outfit.requiredLevel { Label("Nv. \(outfit.requiredLevel)", systemImage: "lock.fill").font(.caption2) }
+                                else { Text(game.state.outfit == outfit ? "Equipado" : "Equipar").font(.caption2.bold()).foregroundStyle(Color.deepGold) }
+                            }.padding(10).frame(maxWidth: .infinity).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 14))
+                                .overlay(RoundedRectangle(cornerRadius: 14).stroke(game.state.outfit == outfit ? Color.deepGold : Color.white.opacity(0.15), lineWidth: 2))
+                        }.buttonStyle(.plain).disabled(game.state.level < outfit.requiredLevel || game.state.outfit == outfit)
                     }
                 }
+                HStack {
+                    UpgradeArt(kind: .backpack, level: game.state.backpackLevel).frame(height: 65)
+                    Text("Mochila Nv. \(game.state.backpackLevel)").font(.caption.bold())
+                    UpgradeArt(kind: .stamina, level: game.state.staminaLevel).frame(height: 65)
+                    Text("Botas Nv. \(game.state.staminaLevel)").font(.caption.bold())
+                }
                 Panel {
-                    Text("Protótipo 0.2").font(.headline)
+                    Text("Protótipo 0.3").font(.headline)
                     Text("Progresso salvo neste aparelho. Esta versão ainda não tem compras, anúncios, conta online ou multiplayer.").font(.caption).foregroundStyle(.secondary)
                 }
                 Button("Começar novo jogo", role: .destructive) { resetConfirmation = true }.padding(.vertical)

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject private var game: GameStore
-    @State private var tab = ProcessInfo.processInfo.arguments.contains("-deepgems-shop-preview") ? 4 : 0
+    @State private var tab = ProcessInfo.processInfo.arguments.contains("-deepgems-shop-preview") ? 4 : (ProcessInfo.processInfo.arguments.contains("-deepgems-mine-preview") ? 1 : 0)
     @State private var resetConfirmation = false
     var body: some View {
         Group {
@@ -28,6 +28,7 @@ struct RootView: View {
                         .tabItem { Label("Loja", systemImage: "bag.fill") }.tag(4)
                 }
                 .toolbarBackground(Color.deepBackground, for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
                 .safeAreaInset(edge: .top) {
                     if let error = game.saveError {
                         VStack(alignment: .leading, spacing: 8) {
@@ -39,6 +40,29 @@ struct RootView: View {
                 }
             }
         }
+        .overlay {
+            if let reward = game.acquisition {
+                ZStack {
+                    Color.black.opacity(0.7).ignoresSafeArea()
+                    VStack(spacing: 22) {
+                        Text("NOVA CONQUISTA").font(.caption.bold()).tracking(3).foregroundStyle(Color.deepGold)
+                        Text(reward.title).font(.system(.title2, design: .serif, weight: .bold)).multilineTextAlignment(.center)
+                        if let kind = reward.upgrade {
+                            HStack(spacing: 20) {
+                                VStack { UpgradeArt(kind: kind, level: reward.oldLevel, pickaxe: reward.pickaxe).frame(width: 90, height: 120); Text("Nv. \(reward.oldLevel)").font(.caption) }
+                                Image(systemName: "arrow.right").foregroundStyle(Color.deepGold)
+                                VStack { UpgradeArt(kind: kind, level: reward.newLevel, pickaxe: reward.pickaxe).frame(width: 110, height: 140); Text("Nv. \(reward.newLevel)").font(.headline).foregroundStyle(Color.deepGold) }
+                            }
+                        } else { PickaxeArt(kind: reward.pickaxe).frame(height: 200) }
+                        Text("Equipamento pronto para sua próxima expedição.").font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                        Button("Bora explorar!") { withAnimation { game.acquisition = nil } }.buttonStyle(GoldButtonStyle())
+                    }.padding(26).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 28))
+                        .overlay(RoundedRectangle(cornerRadius: 28).stroke(Color.deepGold, lineWidth: 2)).padding(24)
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
+        }
+        .animation(.spring(response: 0.4), value: game.acquisition?.id)
         .background(Color.deepBackground.ignoresSafeArea())
         .alert("DeepGems", isPresented: Binding(get: { game.message != nil }, set: { if !$0 { game.message = nil } })) {
             Button("Entendi") { game.message = nil }
@@ -58,41 +82,39 @@ struct BaseView: View {
     let onShop: () -> Void
     @State private var tutorial = false
     var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                ScreenTitle(title: "DeepGems", subtitle: "Cada expedição esconde uma descoberta.")
-                Panel {
+        GeometryReader { geometry in
+            ZStack {
+                Image("BaseV2").resizable().scaledToFill().frame(width: geometry.size.width, height: geometry.size.height).clipped().ignoresSafeArea(edges: .top)
+                LinearGradient(colors: [.black.opacity(0.5), .clear, Color.deepBackground.opacity(0.95)], startPoint: .top, endPoint: .bottom)
+                VStack(spacing: 12) {
                     HStack {
-                        Label("Nível \(game.state.level)", systemImage: "person.crop.circle.fill").font(.headline)
+                        Text("Sua base").font(.system(.largeTitle, design: .serif, weight: .bold))
                         Spacer()
-                        Label("\(game.state.coins)", systemImage: "circle.fill").foregroundStyle(Color.deepGold).font(.headline)
+                        Label("\(game.state.coins)", systemImage: "circle.fill").font(.headline).foregroundStyle(Color.deepGold)
+                            .padding(10).background(Color.deepBackground.opacity(0.85), in: Capsule())
                     }
-                    ProgressView(value: game.state.levelProgress).tint(.deepTeal)
-                    Text("\(game.state.experience) / \(game.state.threshold(for: game.state.level + 1)) XP").font(.caption).foregroundStyle(.secondary)
-                }
-                BaseShowcase(outfit: game.state.outfit, pickaxe: game.state.equippedPickaxe).frame(height: 340)
-                Button(action: onExplore) { Label(game.state.expedition == nil ? "Explorar a mina" : "Continuar expedição", systemImage: "mountain.2.fill") }.buttonStyle(GoldButtonStyle())
-                HStack {
-                    Label("Recorde: \(game.state.deepestRow) m", systemImage: "arrow.down")
-                    Spacer()
-                    Text("\(game.state.inventory.count) pedras na oficina")
-                }.font(.caption).foregroundStyle(.secondary)
-                Button(action: onShop) {
-                    HStack {
-                        PickaxeArt(kind: .amethyst).frame(width: 55, height: 55)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Conheça sua próxima picareta").font(.headline)
-                            Text("Equipamentos e melhorias na Loja").font(.caption).foregroundStyle(.secondary)
+                    HStack(spacing: 12) {
+                        NavigationLink { CharacterView() } label: {
+                            Image(uiImage: GameArtwork.explorer(game.state.outfit)).resizable().scaledToFill()
+                                .frame(width: 52, height: 52).clipped().clipShape(Circle()).overlay(Circle().stroke(Color.deepGold, lineWidth: 2))
+                        }.accessibilityLabel("Personalizar explorador")
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack { Text("Nível \(game.state.level)").font(.headline); Spacer(); Text("\(game.state.experience) / \(game.state.threshold(for: game.state.level + 1)) XP").font(.caption2) }
+                            ProgressView(value: game.state.levelProgress).tint(.deepTeal)
                         }
-                        Spacer(minLength: 4)
-                        Image(systemName: "chevron.right")
-                    }.padding(14).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 18))
-                }.buttonStyle(.plain)
-                NavigationLink { CharacterView() } label: {
-                    Label("Personalizar explorador", systemImage: "person.crop.circle").font(.headline)
-                }.padding(8)
-                Button("Como jogar") { tutorial = true }.padding(.bottom)
-            }.padding(20)
+                    }
+                    NavigationLink { CharacterView() } label: {
+                        ExplorerShowcase(outfit: game.state.outfit, pickaxe: game.state.equippedPickaxe, backpackLevel: game.state.backpackLevel, staminaLevel: game.state.staminaLevel)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }.buttonStyle(.plain).accessibilityLabel("Ver seu explorador e equipamentos")
+                    HStack(spacing: 10) {
+                        equipmentCard(.pickaxe, detail: "Força \(game.state.miningPower)")
+                        equipmentCard(.backpack, detail: "\(game.state.capacity) pedras")
+                    }
+                    Button(action: onExplore) { Label(game.state.expedition == nil ? "Explorar" : "Continuar expedição", systemImage: "hammer.fill") }.buttonStyle(GoldButtonStyle())
+                    HStack { Text("Recorde: \(game.state.deepestRow) m"); Spacer(); Button("Como jogar") { tutorial = true } }.font(.caption)
+                }.padding(.horizontal, 20).padding(.vertical, 12)
+            }
         }.background(Color.deepBackground).toolbar(.hidden, for: .navigationBar)
             .onAppear { if !game.state.hasSeenTutorial && !ProcessInfo.processInfo.arguments.contains("-deepgems-screenshot") { tutorial = true } }
             .sheet(isPresented: $tutorial) {
@@ -105,6 +127,20 @@ struct BaseView: View {
                     Button("Bora escavar!") { game.finishTutorial(); tutorial = false }.buttonStyle(GoldButtonStyle())
                 }.padding(24).presentationDetents([.large])
             }
+    }
+    private func equipmentCard(_ kind: Upgrade, detail: String) -> some View {
+        Button(action: onShop) {
+            HStack(spacing: 7) {
+                UpgradeArt(kind: kind, level: game.state.upgradeLevel(kind), pickaxe: game.state.equippedPickaxe).frame(width: 48, height: 65)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("\(kind.name) • Nv. \(game.state.upgradeLevel(kind))").font(.caption.bold())
+                    Text(detail).font(.caption2).foregroundStyle(.secondary)
+                    Label("Melhorar", systemImage: "arrow.up.circle.fill").font(.caption2.bold()).foregroundStyle(Color.deepTeal)
+                }
+            }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.deepPanel.opacity(0.94), in: RoundedRectangle(cornerRadius: 16))
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.2)))
+        }.buttonStyle(.plain)
     }
     private func upgradeDescription(_ kind: Upgrade) -> String {
         switch kind {

@@ -3,6 +3,8 @@ import SwiftUI
 struct CuttingView: View {
     @EnvironmentObject private var game: GameStore
     @State private var angle = 0.0
+    @State private var fragments = false
+    @State private var fragmentOpacity = 0.0
     private var gem: Gem? {
         guard let id = game.state.cutting?.gemID else { return nil }
         return game.state.inventory.first { $0.id == id }
@@ -15,7 +17,14 @@ struct CuttingView: View {
                     Text(gem.kind.cuttingHint).font(.subheadline).foregroundStyle(.secondary)
                     ZStack {
                         RoundedRectangle(cornerRadius: 24).fill(Color.deepPanel)
-                        GemArt(kind: gem.kind).frame(width: 175, height: 210)
+                        FacetedGemArt(kind: gem.kind, cuts: session.scores.count).frame(width: 175, height: 210)
+                            .animation(.easeInOut(duration: 0.3), value: session.scores.count)
+                        ForEach(0..<8) { i in
+                            GemShape().fill(gem.kind.color).frame(width: 8, height: 12)
+                                .offset(x: fragments ? cos(Double(i) * .pi / 4) * 125 : 0, y: fragments ? sin(Double(i) * .pi / 4) * 115 : 0)
+                                .opacity(fragmentOpacity)
+                                .allowsHitTesting(false)
+                        }
                         cutLine(angle: GameEngine.targetAngle(for: gem, cut: session.scores.count), color: .white.opacity(0.7), dashed: true)
                         if gem.kind == .emerald { cutLine(angle: 25, color: .red.opacity(0.65), dashed: false) }
                         cutLine(angle: angle, color: .deepGold, dashed: false)
@@ -38,7 +47,12 @@ struct CuttingView: View {
                     Text("A lapidação é salva a cada corte. Você pode fechar o app e continuar depois.").font(.caption2).foregroundStyle(.secondary)
                 } else if let result = game.cuttingResult {
                     ScreenTitle(title: "Peça finalizada!", subtitle: result.kind.name)
-                    GemArt(kind: result.kind, polished: true).frame(width: 180, height: 220).padding(25)
+                    HStack(spacing: 24) {
+                        VStack { GemArt(kind: result.kind).frame(width: 80, height: 115); Text("Bruta").font(.caption); Text("\(roughValue(result)) moedas").font(.caption.bold()) }
+                        Image(systemName: "arrow.right").foregroundStyle(Color.deepGold)
+                        VStack { FacetedGemArt(kind: result.kind, cuts: result.kind.cutCount).frame(width: 100, height: 130); Text("Lapidada").font(.caption); Text("\(result.value) moedas").font(.caption.bold()).foregroundStyle(Color.deepGold) }
+                    }.padding(.vertical, 24)
+                    Text("+\(result.value - roughValue(result)) moedas de valorização").font(.headline).foregroundStyle(Color.deepTeal)
                     Text(result.qualityName).font(.largeTitle.bold()).foregroundStyle(result.kind.color)
                     Text("Qualidade: \(result.cutQuality ?? 0)%").font(.headline)
                     Label("\(result.value) moedas", systemImage: "circle.fill").font(.title2.bold()).foregroundStyle(Color.deepGold)
@@ -56,8 +70,12 @@ struct CuttingView: View {
                     }.padding().frame(maxWidth: .infinity, alignment: .leading).background(Color.red.opacity(0.3))
                 }
             }
-            .onChange(of: game.state.cutting?.scores.count) { _, _ in angle = 0 }
+            .onChange(of: game.state.cutting?.scores.count) { _, _ in
+                angle = 0; fragments = false; fragmentOpacity = 0.8
+                withAnimation(.easeOut(duration: 0.55)) { fragments = true; fragmentOpacity = 0 }
+            }
     }
+    private func roughValue(_ gem: Gem) -> Int { var rough = gem; rough.cutQuality = nil; return rough.value }
     private func cutLine(angle: Double, color: Color, dashed: Bool) -> some View {
         Rectangle().stroke(color, style: StrokeStyle(lineWidth: 2, dash: dashed ? [6, 5] : []))
             .frame(width: 230, height: 1).rotationEffect(.degrees(angle))

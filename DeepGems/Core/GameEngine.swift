@@ -64,6 +64,7 @@ public enum GameEngine {
     }
 
     public static func upgrade(state: inout GameState, kind: Upgrade) throws {
+        guard state.expedition == nil else { throw GameError.message("Volte à base para melhorar seus equipamentos.") }
         let cost = state.upgradeCost(kind)
         guard state.coins >= cost else { throw GameError.message("Você precisa de \(cost) moedas para essa melhoria.") }
         guard state.upgradeLevel(kind) < 1000 else { throw GameError.message("Limite de equipamento desta versão atingido.") }
@@ -91,6 +92,19 @@ public enum GameEngine {
         guard let index = state.inventory.firstIndex(where: { $0.id == gemID }) else { throw GameError.message("Pedra não encontrada.") }
         state.coins += state.inventory[index].value
         state.inventory.remove(at: index)
+    }
+
+    /// Validate the complete selection before changing coins or inventory.
+    public static func sellBatch(state: inout GameState, gemIDs: Set<UUID>) throws {
+        guard !gemIDs.isEmpty else { throw GameError.message("Selecione pedras para vender.") }
+        let gems = state.inventory.filter { gemIDs.contains($0.id) }
+        guard gems.count == gemIDs.count, !gems.contains(where: { $0.id == state.cutting?.gemID }) else {
+            throw GameError.message("A seleção mudou ou contém uma pedra em lapidação.")
+        }
+        let total = gems.reduce(0) { $0 + $1.value }
+        guard state.coins <= 1_000_000_000 - total else { throw GameError.message("Limite de moedas desta versão atingido.") }
+        state.coins += total
+        state.inventory.removeAll { gemIDs.contains($0.id) }
     }
 
     public static func beginCutting(state: inout GameState, gemID: UUID) throws {

@@ -6,62 +6,76 @@ struct MineView: View {
     @State private var showReturn = false
     @Environment(\.scenePhase) private var scenePhase
     var body: some View {
-        ScrollView {
-            VStack(spacing: 14) {
-                if let expedition = game.state.expedition {
-                    ScreenTitle(title: "\(expedition.player.row) metros", subtitle: "Recorde da expedição: \(expedition.deepestRow) m")
-                    HStack(spacing: 12) {
-                        Panel {
-                            Label("\(expedition.energy) / \(game.state.maximumEnergy)", systemImage: "bolt.fill").font(.headline).foregroundStyle(Color.deepTeal)
-                            ProgressView(value: Double(expedition.energy), total: Double(game.state.maximumEnergy)).tint(.deepTeal)
-                        }
-                        Panel {
-                            Label("\(expedition.carried.count) / \(game.state.capacity)", systemImage: "backpack.fill").font(.headline).foregroundStyle(Color.deepGold)
-                            ProgressView(value: Double(expedition.carried.count), total: Double(game.state.capacity))
-                        }
-                    }
-                    SpriteView(scene: game.mineScene, isPaused: scenePhase != .active, preferredFramesPerSecond: 30)
-                        .frame(height: 390).clipShape(RoundedRectangle(cornerRadius: 18))
-                        .accessibilityLabel("Mina. Use os controles abaixo para mover ou escavar.")
+        GeometryReader { geometry in
+            if let e = game.state.expedition {
+                VStack(spacing: 8) {
                     HStack {
-                        PickaxeArt(kind: game.state.equippedPickaxe).frame(width: 36, height: 36)
-                        Text(game.state.equippedPickaxe.name).font(.caption.bold())
+                        Text("Profundidade \(e.player.row) m").font(.system(.title2, design: .serif, weight: .bold))
                         Spacer()
-                        Text("Força \(game.state.miningPower)").font(.caption.bold()).foregroundStyle(Color.deepGold)
+                        Text("Recorde \(game.state.deepestRow) m").font(.caption2).foregroundStyle(.secondary)
                     }
-                    Text("Toque em um bloco com borda dourada. Cada golpe usa 1 de energia.").font(.caption).foregroundStyle(.secondary)
-                    HStack(spacing: 12) {
-                        direction("arrow.left", name: "Escavar ou andar para a esquerda", column: -1, row: 0)
-                        direction("arrow.up", name: "Escavar ou andar para cima", column: 0, row: -1)
-                        direction("arrow.down", name: "Escavar ou andar para baixo", column: 0, row: 1)
-                        direction("arrow.right", name: "Escavar ou andar para a direita", column: 1, row: 0)
+                    HStack(spacing: 10) {
+                        meter(value: e.energy, maximum: game.state.maximumEnergy, symbol: "bolt.fill", tint: .deepTeal)
+                        meter(value: e.carried.count, maximum: game.state.capacity, symbol: "backpack.fill", tint: .deepGold)
                     }
-                    if expedition.energy == 0 { Text("Energia esgotada. Seu saque está seguro: volte à base.").font(.subheadline.bold()).foregroundStyle(Color.deepGold) }
-                    if !expedition.carried.isEmpty {
-                        ScrollView(.horizontal) {
-                            HStack(spacing: 10) {
-                                ForEach(expedition.carried) { gem in
-                                    VStack { GemArt(kind: gem.kind).frame(width: 35, height: 42); Text(gem.kind.name).font(.caption2) }.padding(8).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 10))
-                                }
-                            }
+                    SpriteView(scene: game.mineScene, isPaused: scenePhase != .active, preferredFramesPerSecond: 60)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                        .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.deepGold.opacity(0.3)))
+                        .accessibilityLabel("Mina. Toque nos blocos dourados ao lado do explorador ou use as setas.")
+                    HStack(spacing: 8) {
+                        ForEach(GemKind.allCases) { kind in
+                            VStack(spacing: 2) {
+                                GemArt(kind: kind).frame(height: geometry.size.height < 650 ? 24 : 36)
+                                Text("\(e.carried.filter { $0.kind == kind }.count)").font(.caption.bold()).monospacedDigit()
+                            }.frame(maxWidth: .infinity).padding(5).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 9))
                         }
+                    }.accessibilityLabel("Saque: \(e.carried.count) pedras")
+                    Text(status(e)).font(.caption).foregroundStyle(e.energy == 0 || e.carried.count >= game.state.capacity ? Color.deepGold : Color.white.opacity(0.75))
+                        .lineLimit(2).frame(height: 30)
+                    HStack(spacing: 8) {
+                        direction("arrow.left", name: "Esquerda", column: -1, row: 0)
+                        direction("arrow.up", name: "Cima", column: 0, row: -1)
+                        direction("arrow.down", name: "Baixo", column: 0, row: 1)
+                        direction("arrow.right", name: "Direita", column: 1, row: 0)
                     }
-                    Button { showReturn = true } label: { Label("Voltar à base e guardar saque", systemImage: "house.fill") }.buttonStyle(GoldButtonStyle())
-                } else {
-                    ScreenTitle(title: "A mina espera", subtitle: "Comece uma expedição com energia cheia.")
-                    GemArt(kind: .amethyst).frame(width: 150, height: 180).padding(35)
-                    Text("Você mantém seu nível, equipamentos e coleção. Cada expedição gera uma nova mina.").foregroundStyle(.secondary)
+                    Button { showReturn = true } label: { Label("Voltar à base • \(e.carried.count) pedras", systemImage: "house.fill") }
+                        .buttonStyle(GoldButtonStyle())
+                }.padding(.horizontal, 16).padding(.vertical, 8)
+            } else {
+                VStack(spacing: 22) {
+                    ScreenTitle(title: "A mina espera", subtitle: "Uma nova expedição. Novas descobertas.")
+                    Spacer()
+                    GemArt(kind: .amethyst).frame(width: 160, height: 180)
+                    Text("Energia cheia, mochila vazia. Até onde você vai chegar?").multilineTextAlignment(.center).foregroundStyle(.secondary)
+                    Spacer()
                     Button("Começar expedição") { game.start() }.buttonStyle(GoldButtonStyle())
-                }
-            }.padding(20)
+                }.padding(24)
+            }
         }.background(Color.deepBackground).toolbar(.hidden, for: .navigationBar)
-            .confirmationDialog("Guardar \(game.state.expedition?.carried.count ?? 0) pedras e encerrar esta expedição?", isPresented: $showReturn, titleVisibility: .visible) {
+            .confirmationDialog("Guardar \(game.state.expedition?.carried.count ?? 0) pedras e encerrar a expedição?", isPresented: $showReturn, titleVisibility: .visible) {
                 Button("Guardar e voltar") { game.returnToBase() }
             }
     }
+    private func status(_ e: Expedition) -> String {
+        if e.energy == 0 { return "Energia esgotada. Volte para guardar seu saque." }
+        if e.carried.count >= game.state.capacity { return "Mochila cheia. Guarde suas descobertas na base." }
+        return game.miningNotice ?? "Toque nos blocos dourados. Cada golpe custa 1 de energia."
+    }
+    private func meter(value: Int, maximum: Int, symbol: String, tint: Color) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: symbol).font(.title3).foregroundStyle(tint)
+            VStack(spacing: 4) {
+                Text("\(value) / \(maximum)").font(.caption.bold()).monospacedDigit()
+                ProgressView(value: Double(value), total: Double(maximum)).tint(tint)
+            }
+        }.padding(9).frame(maxWidth: .infinity).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(tint.opacity(0.35)))
+    }
     private func direction(_ symbol: String, name: String, column: Int, row: Int) -> some View {
         Button { game.move(column: column, row: row) } label: {
-            Image(systemName: symbol).font(.title2.bold()).frame(maxWidth: .infinity).frame(height: 48).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 12))
-        }.accessibilityLabel(name)
+            Image(systemName: symbol).font(.title3.bold()).frame(maxWidth: .infinity).frame(height: 40)
+                .background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 10))
+        }.disabled(!game.canAct(column: column, row: row)).accessibilityLabel("Escavar ou andar: \(name)")
     }
 }

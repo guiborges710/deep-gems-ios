@@ -4,7 +4,7 @@ struct EquipmentView: View {
     @EnvironmentObject private var game: GameStore
     @State private var selected: PickaxeKind = .amethyst
     @State private var purchaseConfirmation = false
-    @State private var section = 0
+    @State private var section = ProcessInfo.processInfo.arguments.contains("-deepgems-upgrades-preview") ? 1 : 0
     var body: some View {
         ScrollView {
             VStack(spacing: 18) {
@@ -80,12 +80,20 @@ struct EquipmentView: View {
             ForEach(Upgrade.allCases) { item in
                 Panel {
                     HStack(spacing: 16) {
-                        if item == .pickaxe { PickaxeArt(kind: game.state.equippedPickaxe).frame(width: 65, height: 70) }
-                        else { Image(systemName: item == .backpack ? "backpack.fill" : "bolt.heart.fill").font(.system(size: 38)).foregroundStyle(Color.deepGold).frame(width: 65) }
+                        UpgradeArt(kind: item, level: game.state.upgradeLevel(item), pickaxe: game.state.equippedPickaxe).frame(width: 85, height: 95)
                         VStack(alignment: .leading, spacing: 7) {
                             Text("\(item.name) • Nv. \(game.state.upgradeLevel(item))").font(.headline)
                             Text(upgradeDetail(item)).font(.caption).foregroundStyle(.secondary)
                         }
+                    }
+                    HStack {
+                        Text("Próximo nível").font(.caption).foregroundStyle(.secondary)
+                        Spacer()
+                        UpgradeArt(kind: item, level: game.state.upgradeLevel(item) + 1, pickaxe: game.state.equippedPickaxe).frame(width: 45, height: 45)
+                        Text("Nv. \(game.state.upgradeLevel(item) + 1)").font(.caption.bold()).foregroundStyle(Color.deepGold)
+                    }
+                    if item != .pickaxe {
+                        Text("Visual reforçado no Nv. 3 • visual épico no Nv. 6").font(.caption2).foregroundStyle(.secondary)
                     }
                     Button { game.upgrade(item) } label: { Label("Melhorar • \(game.state.upgradeCost(item)) moedas", systemImage: "arrow.up.circle.fill") }
                         .buttonStyle(GoldButtonStyle()).padding(.top, 12)

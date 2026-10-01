@@ -82,3 +82,11 @@ xcodebuild -project DeepGems.xcodeproj -scheme DeepGems -sdk iphonesimulator \
 ```
 
 A compilação iOS e o teste visual precisam de macOS/Xcode. Consulte o status real do workflow; não considere o app compilado apenas porque os arquivos estão no Git.
+
+### Visual pass 0.3
+- Reference-led cartoon explorer, cave base, textured rock grid, illustrated backpacks and boots.
+- Fixed mine HUD / controls / return action; no scrolling during mining. Expected mining restrictions display inline.
+- Hand-attached pickaxe rig, shared idle motion, animated movement, impacts and discovery burst.
+- Progressive gem silhouette and facets, before/after value comparison.
+- Grouped workshop inventory, value sorting, rough-gem selection and atomic batch sale.
+- Upgrade previews, acquisition celebration and equipment artwork tiers at levels 3 and 6. Existing saves stay compatible.

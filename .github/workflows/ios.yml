@@ -31,14 +31,20 @@ jobs:
           xcrun simctl boot "$SIMULATOR_ID"
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
           xcrun simctl install "$SIMULATOR_ID" .build-ios/Build/Products/Debug-iphonesimulator/DeepGems.app
-          xcrun simctl launch "$SIMULATOR_ID" com.guiborges.deepgems -deepgems-screenshot
-          sleep 5
           mkdir -p visual-checks
-          xcrun simctl io "$SIMULATOR_ID" screenshot visual-checks/base.png
-          xcrun simctl terminate "$SIMULATOR_ID" com.guiborges.deepgems
-          xcrun simctl launch "$SIMULATOR_ID" com.guiborges.deepgems -deepgems-screenshot -deepgems-shop-preview
-          sleep 3
-          xcrun simctl io "$SIMULATOR_ID" screenshot visual-checks/shop.png
+          for SCREEN in base shop upgrades mine cut; do
+            FLAGS="-deepgems-screenshot -deepgems-preview"
+            case "$SCREEN" in
+              shop) FLAGS="$FLAGS -deepgems-shop-preview" ;;
+              upgrades) FLAGS="$FLAGS -deepgems-shop-preview -deepgems-upgrades-preview" ;;
+              mine) FLAGS="$FLAGS -deepgems-mine-preview" ;;
+              cut) FLAGS="$FLAGS -deepgems-cut-preview" ;;
+            esac
+            xcrun simctl launch "$SIMULATOR_ID" com.guiborges.deepgems $FLAGS
+            sleep 3
+            xcrun simctl io "$SIMULATOR_ID" screenshot "visual-checks/$SCREEN.png"
+            xcrun simctl terminate "$SIMULATOR_ID" com.guiborges.deepgems
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: deepgems-screenshots

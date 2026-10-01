@@ -26,3 +26,11 @@ Use case: stylized-concept. Asset type: actual transparent equipment sprite shee
 
 Use case: stylized-concept. Asset type: actual transparent collectible gemstone sprite sheet. Landscape image with exactly FIVE EQUAL WIDTH INVISIBLE CELLS in ONE horizontal row. In cell 1 a milky translucent quartz crystal, cell 2 vivid violet amethyst, cell 3 saturated green emerald, cell 4 ruby red gemstone, cell 5 icy cyan diamond. Exactly one isolated gem per cell, all similar size centered precisely in cell, gems occupy about 65 percent cell width with generous clear transparent margins and no overlap. Brilliant faceted hand painted polished 2D fantasy mobile game illustrations with soft 3D volume, crisp silhouettes, restrained inner glow and highlights. Transparent background, no labels, no text, no numbers, no ground, no frames, no cast shadows outside each object.
 
+
+## Reference-led art pass 0.3
+
+New production assets in `DeepGems/Resources/Assets.xcassets`: BaseV2, ExplorerV2, TerrainAtlas (four cells), UpgradeAtlas (six cells). Generated using the built-in image tool from the supplied Base / Exploração / Personagem reference. Original PNGs are preserved; transparent atlas padding is cropped and cached at runtime. Prompts: cartoon blue cave workshop with amber lanterns and empty foreground platform; youthful teal-shirt miner with amber helmet and empty glove; gray, earth and blue stone blocks plus lantern ladder; three leather-to-crystal backpacks and three leather-to-crystal boots. Explorer edit removed the handle so the equipped pickaxe can attach behind the glove.
+
+Backpacks and boots change artwork at levels 3 and 6; later levels retain the epic artwork while stats continue increasing. Pickaxe upgrades improve strength; owned pickaxe kinds keep their own art. Lapidation now clips the sprite and reveals facets after each cut (stylized bevels, not a geometric gem simulation). The reference's pet and treasure chest are future features, not implemented mechanics.
+
+Simulator preview arguments seed isolated temporary saves only and cannot replace the player's normal progress. CI captures Base, Loja, Melhorias, Mina and Lapidação.
