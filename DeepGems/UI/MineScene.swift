@@ -1,5 +1,7 @@
 import SpriteKit
 import UIKit
+import Metal
+import OSLog
 
 @MainActor
 final class MineScene: SKScene {
@@ -16,6 +18,16 @@ final class MineScene: SKScene {
     private var tileSize: CGFloat = 45
     private var boardOrigin = CGPoint.zero
     private let visibleRows = 6
+    private var reportedFrame = false
+    override func didMove(to view: SKView) {
+        Logger(subsystem: "com.guiborges.deepgems", category: "render").notice("Mine attached: bounds=\(view.bounds.width)x\(view.bounds.height), Metal=\(MTLCreateSystemDefaultDevice() != nil)")
+    }
+    override func update(_ currentTime: TimeInterval) {
+        if !reportedFrame {
+            reportedFrame = true
+            Logger(subsystem: "com.guiborges.deepgems", category: "render").notice("Mine first frame: width=\(self.size.width), height=\(self.size.height), Metal=\(MTLCreateSystemDefaultDevice() != nil)")
+        }
+    }
     override init(size: CGSize = CGSize(width: 360, height: 400)) {
         super.init(size: size); scaleMode = .resizeFill
         backgroundColor = UIColor(red: 0.025, green: 0.045, blue: 0.09, alpha: 1)
@@ -35,8 +47,8 @@ final class MineScene: SKScene {
     private func redraw(previous: GridPosition?) {
         removeAllChildren(); weaponNode = nil; playerNode = nil
         guard let e = expedition else { return }
-        tileSize = min(size.width / CGFloat(GameEngine.columns), size.height / CGFloat(visibleRows))
-        boardOrigin = .init(x: (size.width - tileSize * CGFloat(GameEngine.columns)) / 2, y: (size.height - tileSize * CGFloat(visibleRows)) / 2)
+        tileSize = min(size.width / CGFloat(GameEngine.columns), max(1, size.height - 22) / CGFloat(visibleRows))
+        boardOrigin = .init(x: (size.width - tileSize * CGFloat(GameEngine.columns)) / 2, y: (size.height - tileSize * CGFloat(visibleRows) - 22) / 2)
         visibleFirstRow = max(0, e.player.row - 2)
         for tile in e.tiles where (visibleFirstRow..<(visibleFirstRow + visibleRows)).contains(tile.position.row) {
             let point = center(for: tile.position)
@@ -77,13 +89,13 @@ final class MineScene: SKScene {
         let rig = SKNode(); player.addChild(rig)
         let image = GameArtwork.explorer(outfit)
         let h = tileSize * 1.35, w = h * image.size.width / max(1, image.size.height)
-        if backpackLevel >= 3 {
-            let pack = SKSpriteNode(texture: texture("pack-\(backpackLevel >= 6 ? 2 : 1)") { GameArtwork.upgrade(.backpack, level: backpackLevel) })
-            pack.size = .init(width: w*0.36, height: h*0.3); pack.position = .init(x: -w*0.31, y: h*0.03); rig.addChild(pack)
+        if backpackLevel >= 1 {
+            let pack = SKSpriteNode(texture: texture("pack-\(backpackLevel >= 6 ? 2 : (backpackLevel >= 3 ? 1 : 0))") { GameArtwork.upgrade(.backpack, level: backpackLevel) })
+            pack.size = .init(width: w*0.48, height: h*0.34); pack.position = .init(x: -w*0.27, y: h*0.03); rig.addChild(pack)
         }
         let weapon = SKSpriteNode(texture: texture("weapon-\(pickaxe.rawValue)") { GameArtwork.pickaxe(pickaxe) })
         weapon.size = .init(width: h*0.42, height: h*0.42); weapon.anchorPoint = .init(x: 0.3, y: 0.3)
-        weapon.position = .init(x: -w*0.20, y: -h*0.12); weapon.zRotation = -CGFloat.pi * 48 / 180; weapon.zPosition = 1
+        weapon.position = .init(x: -w*0.20, y: -h*0.12); weapon.zRotation = CGFloat.pi * 55 / 180; weapon.zPosition = 1
         rig.addChild(weapon); weaponNode = weapon
         let body = SKSpriteNode(texture: texture("explorer-\(outfit.rawValue)") { image })
         body.size = .init(width: w, height: h); body.zPosition = 2; rig.addChild(body)

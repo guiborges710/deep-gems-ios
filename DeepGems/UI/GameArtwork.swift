@@ -139,14 +139,14 @@ struct ExplorerShowcase: View {
             let h = min(geometry.size.height, geometry.size.width / ratio)
             let w = h * ratio
             ZStack {
-                if backpackLevel >= 3 {
-                    UpgradeArt(kind: .backpack, level: backpackLevel).frame(width: w * 0.36, height: h * 0.3)
-                        .offset(x: -w * 0.31, y: -h * 0.03)
+                if backpackLevel >= 1 {
+                    UpgradeArt(kind: .backpack, level: backpackLevel).frame(width: w * 0.48, height: h * 0.34)
+                        .offset(x: -w * 0.27, y: -h * 0.03)
                 }
                 // Grip is calibrated against ExplorerV2's left glove and the normalized pickaxe shaft.
                 Image(uiImage: GameArtwork.pickaxe(pickaxe)).resizable().scaledToFit()
                     .frame(width: h * 0.42, height: h * 0.42)
-                    .rotationEffect(.degrees(48), anchor: UnitPoint(x: 0.3, y: 0.7))
+                    .rotationEffect(.degrees(-55), anchor: UnitPoint(x: 0.3, y: 0.7))
                     .position(x: geometry.size.width / 2 - w * 0.20 + h * 0.084, y: geometry.size.height / 2 + h * 0.12 - h * 0.084)
                     .allowsHitTesting(false)
                 Image(uiImage: image).resizable().frame(width: w, height: h)

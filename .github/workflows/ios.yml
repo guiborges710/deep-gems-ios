@@ -32,20 +32,27 @@ jobs:
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
           xcrun simctl install "$SIMULATOR_ID" .build-ios/Build/Products/Debug-iphonesimulator/DeepGems.app
           mkdir -p visual-checks
-          for SCREEN in base shop upgrades mine cut; do
+          for SCREEN in base shop upgrades mine character reward cut facets result; do
             FLAGS="-deepgems-screenshot -deepgems-preview"
             case "$SCREEN" in
               shop) FLAGS="$FLAGS -deepgems-shop-preview" ;;
               upgrades) FLAGS="$FLAGS -deepgems-shop-preview -deepgems-upgrades-preview" ;;
               mine) FLAGS="$FLAGS -deepgems-mine-preview" ;;
+              character) FLAGS="$FLAGS -deepgems-character-preview" ;;
+              reward) FLAGS="$FLAGS -deepgems-shop-preview -deepgems-reward-preview" ;;
               cut) FLAGS="$FLAGS -deepgems-cut-preview" ;;
+              facets) FLAGS="$FLAGS -deepgems-cut-preview -deepgems-cut-facets-preview" ;;
+              result) FLAGS="$FLAGS -deepgems-cut-preview -deepgems-cut-result-preview" ;;
             esac
             xcrun simctl launch "$SIMULATOR_ID" com.guiborges.deepgems $FLAGS
-            sleep 3
+            if [ "$SCREEN" = mine ]; then sleep 12; else sleep 3; fi
             xcrun simctl io "$SIMULATOR_ID" screenshot "visual-checks/$SCREEN.png"
+            if [ "$SCREEN" = mine ]; then
+              xcrun simctl spawn "$SIMULATOR_ID" log show --last 2m --info --predicate 'subsystem == "com.guiborges.deepgems"' > visual-checks/render.log
+            fi
             xcrun simctl terminate "$SIMULATOR_ID" com.guiborges.deepgems
           done
       - uses: actions/upload-artifact@v4
         with:
           name: deepgems-screenshots
-          path: visual-checks/*.png
+          path: visual-checks/

@@ -18,8 +18,8 @@ struct MineView: View {
                         meter(value: e.energy, maximum: game.state.maximumEnergy, symbol: "bolt.fill", tint: .deepTeal)
                         meter(value: e.carried.count, maximum: game.state.capacity, symbol: "backpack.fill", tint: .deepGold)
                     }
-                    SpriteView(scene: game.mineScene, isPaused: scenePhase != .active, preferredFramesPerSecond: 60)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    SpriteView(scene: game.mineScene, isPaused: false, preferredFramesPerSecond: 60)
+                        .frame(maxWidth: .infinity).frame(height: max(80, geometry.size.height - (geometry.size.height < 650 ? 395 : 410)))
                         .clipShape(RoundedRectangle(cornerRadius: 18))
                         .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.deepGold.opacity(0.3)))
                         .accessibilityLabel("Mina. Toque nos blocos dourados ao lado do explorador ou use as setas.")
@@ -52,7 +52,9 @@ struct MineView: View {
                     Button("Começar expedição") { game.start() }.buttonStyle(GoldButtonStyle())
                 }.padding(24)
             }
-        }.background(Color.deepBackground).toolbar(.hidden, for: .navigationBar)
+        }.onAppear { game.mineScene.isPaused = false }
+            .onChange(of: scenePhase) { _, phase in game.mineScene.isPaused = phase != .active }
+            .background(Color.deepBackground).toolbar(.hidden, for: .navigationBar)
             .confirmationDialog("Guardar \(game.state.expedition?.carried.count ?? 0) pedras e encerrar a expedição?", isPresented: $showReturn, titleVisibility: .visible) {
                 Button("Guardar e voltar") { game.returnToBase() }
             }

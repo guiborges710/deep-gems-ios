@@ -34,3 +34,5 @@ New production assets in `DeepGems/Resources/Assets.xcassets`: BaseV2, ExplorerV
 Backpacks and boots change artwork at levels 3 and 6; later levels retain the epic artwork while stats continue increasing. Pickaxe upgrades improve strength; owned pickaxe kinds keep their own art. Lapidation now clips the sprite and reveals facets after each cut (stylized bevels, not a geometric gem simulation). The reference's pet and treasure chest are future features, not implemented mechanics.
 
 Simulator preview arguments seed isolated temporary saves only and cannot replace the player's normal progress. CI captures Base, Loja, Melhorias, Mina and Lapidação.
+
+Visual QA adjustment: remove the baked-in backpack from ExplorerV2 while preserving straps, pose and empty fist. Draw one equipped backpack behind the character at all levels. Calibrate pickaxe grip behind the glove with -55° SwiftUI rotation / +55° SpriteKit rotation. Reserve upper space for the miner's helmet at depth zero. Capture character, acquisition and partially/finally cut gems as well as main screens.

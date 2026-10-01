@@ -31,7 +31,22 @@ final class GameStore: ObservableObject {
             state.inventory = [Gem(kind: .amethyst), Gem(kind: .quartz), Gem(kind: .diamond, cutQuality: 95)]
             state.hasSeenTutorial = true
             if ProcessInfo.processInfo.arguments.contains("-deepgems-mine-preview") { try? GameEngine.startExpedition(state: &state, seed: 710) }
-            if ProcessInfo.processInfo.arguments.contains("-deepgems-cut-preview") { try? GameEngine.beginCutting(state: &state, gemID: state.inventory[0].id) }
+            if ProcessInfo.processInfo.arguments.contains("-deepgems-cut-preview") {
+                try? GameEngine.beginCutting(state: &state, gemID: state.inventory[0].id)
+                if ProcessInfo.processInfo.arguments.contains("-deepgems-cut-facets-preview") {
+                    _ = try? GameEngine.applyCut(state: &state, angle: -30)
+                    _ = try? GameEngine.applyCut(state: &state, angle: 30)
+                }
+                if ProcessInfo.processInfo.arguments.contains("-deepgems-cut-result-preview") {
+                    _ = try? GameEngine.applyCut(state: &state, angle: -30)
+                    _ = try? GameEngine.applyCut(state: &state, angle: 30)
+                    _ = try? GameEngine.applyCut(state: &state, angle: 0)
+                    cuttingResult = state.inventory[0]
+                }
+            }
+            if ProcessInfo.processInfo.arguments.contains("-deepgems-reward-preview") {
+                state.backpackLevel = 2; upgrade(.backpack)
+            }
         }
         mineScene.onSelect = { [weak self] position in self?.mine(at: position) }
         syncScene()

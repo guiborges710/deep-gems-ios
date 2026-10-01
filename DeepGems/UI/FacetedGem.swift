@@ -4,10 +4,10 @@ import SwiftUI
 struct CutGemShape: Shape {
     var cuts: Int
     func path(in rect: CGRect) -> Path {
-        let top: CGFloat = cuts >= 1 ? 0.11 : 0
-        let left: CGFloat = cuts >= 2 ? 0.12 : 0
-        let bottom: CGFloat = cuts >= 3 ? 0.86 : 1
-        let right: CGFloat = cuts >= 3 ? 0.9 : 1
+        let top: CGFloat = cuts >= 4 ? 0.18 : (cuts >= 1 ? 0.11 : 0)
+        let left: CGFloat = cuts >= 4 ? 0.18 : (cuts >= 2 ? 0.12 : 0)
+        let bottom: CGFloat = cuts >= 4 ? 0.82 : (cuts >= 3 ? 0.86 : 1)
+        let right: CGFloat = cuts >= 4 ? 0.84 : (cuts >= 3 ? 0.9 : 1)
         let bevel: CGFloat = cuts > 0 ? 0.22 : 0
         let points: [CGPoint] = [
             .init(x: left+bevel, y: top), .init(x: right-bevel, y: top), .init(x: right, y: top+bevel),

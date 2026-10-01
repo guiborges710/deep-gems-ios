@@ -16,7 +16,7 @@ struct RootView: View {
                 }.padding(24)
             } else {
                 TabView(selection: $tab) {
-                    NavigationStack { BaseView(onExplore: { game.start(); if game.state.expedition != nil { tab = 1 } }, onShop: { tab = 4 }) }
+                    NavigationStack { if ProcessInfo.processInfo.arguments.contains("-deepgems-character-preview") { CharacterView() } else { BaseView(onExplore: { game.start(); if game.state.expedition != nil { tab = 1 } }, onShop: { tab = 4 }) } }
                         .tabItem { Label("Base", systemImage: "house.fill") }.tag(0)
                     NavigationStack { MineView() }
                         .tabItem { Label("Mina", systemImage: "mountain.2.fill") }.tag(1)
@@ -55,7 +55,7 @@ struct RootView: View {
                             }
                         } else { PickaxeArt(kind: reward.pickaxe).frame(height: 200) }
                         Text("Equipamento pronto para sua próxima expedição.").font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                        Button("Bora explorar!") { withAnimation { game.acquisition = nil } }.buttonStyle(GoldButtonStyle())
+                        Button("Continuar") { withAnimation { game.acquisition = nil } }.buttonStyle(GoldButtonStyle())
                     }.padding(26).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 28))
                         .overlay(RoundedRectangle(cornerRadius: 28).stroke(Color.deepGold, lineWidth: 2)).padding(24)
                         .transition(.scale.combined(with: .opacity))
