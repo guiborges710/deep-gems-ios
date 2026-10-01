@@ -35,7 +35,11 @@ jobs:
           sleep 5
           mkdir -p visual-checks
           xcrun simctl io "$SIMULATOR_ID" screenshot visual-checks/base.png
+          xcrun simctl terminate "$SIMULATOR_ID" com.guiborges.deepgems
+          xcrun simctl launch "$SIMULATOR_ID" com.guiborges.deepgems -deepgems-screenshot -deepgems-shop-preview
+          sleep 3
+          xcrun simctl io "$SIMULATOR_ID" screenshot visual-checks/shop.png
       - uses: actions/upload-artifact@v4
         with:
-          name: deepgems-base-screenshot
-          path: visual-checks/base.png
+          name: deepgems-screenshots
+          path: visual-checks/*.png

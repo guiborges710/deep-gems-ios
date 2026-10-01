@@ -2,7 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject private var game: GameStore
-    @State private var tab = 0
+    @State private var tab = ProcessInfo.processInfo.arguments.contains("-deepgems-shop-preview") ? 4 : 0
     @State private var resetConfirmation = false
     var body: some View {
         Group {
