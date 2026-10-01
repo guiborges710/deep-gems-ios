@@ -26,7 +26,8 @@ final class GameEngineTests: XCTestCase {
     func testFullBackpackDoesNotDestroyGem() throws {
         var state = GameState()
         try GameEngine.startExpedition(state: &state, seed: 3)
-        state.expedition?.carried = (0..<state.capacity).map { _ in Gem(kind: .quartz) }
+        let capacity = state.capacity
+        state.expedition?.carried = (0..<capacity).map { _ in Gem(kind: .quartz) }
         let before = state
         XCTAssertThrowsError(try GameEngine.act(state: &state, at: .init(column: 2, row: 1)))
         XCTAssertEqual(state, before)
