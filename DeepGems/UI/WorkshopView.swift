@@ -13,6 +13,12 @@ struct WorkshopView: View {
     }
     private var selectedGems: [Gem] { game.state.inventory.filter { selection.contains($0.id) && $0.id != game.state.cutting?.gemID } }
     private var selectedTotal: Int { selectedGems.reduce(0) { $0 + $1.value } }
+    private var groupedKinds: [GemKind] {
+        let present = GemKind.allCases.filter { kind in gems.contains(where: { $0.kind == kind }) }
+        if sort != 0 { return present.sorted { $0.rawValue < $1.rawValue } }
+        let values = Dictionary(grouping: gems, by: \.kind).mapValues { items in items.map(\.value).max() ?? 0 }
+        return present.sorted { (values[$0] ?? 0) > (values[$1] ?? 0) }
+    }
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
@@ -25,22 +31,7 @@ struct WorkshopView: View {
                     Button("Selecionar brutas") { selection = Set(gems.filter { $0.cutQuality == nil && $0.id != game.state.cutting?.gemID }.map(\.id)) }.font(.caption.bold())
                 }
                 if gems.isEmpty { ContentUnavailableView("Nenhuma pedra aqui", systemImage: "diamond", description: Text("Explore e volte à base para guardar suas descobertas.")) }
-                ForEach(GemKind.allCases.filter { kind in gems.contains { $0.kind == kind } }.sorted { a, b in
-                    sort == 0 ? (gems.filter { $0.kind == a }.map(\.value).max() ?? 0) > (gems.filter { $0.kind == b }.map(\.value).max() ?? 0) : a.rawValue < b.rawValue
-                }) { kind in
-                    let group = gems.filter { $0.kind == kind }
-                    DisclosureGroup {
-                        ForEach(group) { gem in gemRow(gem) }
-                    } label: {
-                        HStack(spacing: 14) {
-                            GemArt(kind: kind).frame(width: 45, height: 55)
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("\(kind.name) • \(group.count)").font(.headline)
-                                Text("Total \(group.reduce(0) { $0 + $1.value }) moedas").font(.caption).foregroundStyle(Color.deepGold)
-                            }
-                        }
-                    }.padding(14).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 18))
-                }
+                ForEach(groupedKinds) { kind in groupCard(kind) }
             }.padding(20)
         }.background(Color.deepBackground).toolbar(.hidden, for: .navigationBar)
             .safeAreaInset(edge: .bottom) {
@@ -58,6 +49,21 @@ struct WorkshopView: View {
             .confirmationDialog("Vender \(selectedGems.count) pedras por \(selectedTotal) moedas?", isPresented: $bulkConfirmation, titleVisibility: .visible) {
                 Button("Confirmar venda • \(selectedTotal) moedas") { game.sellBatch(Set(selectedGems.map(\.id))); selection.removeAll() }
             }
+    }
+    private func groupCard(_ kind: GemKind) -> some View {
+        let group = gems.filter { $0.kind == kind }
+        let total = group.reduce(0) { $0 + $1.value }
+        return DisclosureGroup {
+            ForEach(group) { gem in gemRow(gem) }
+        } label: {
+            HStack(spacing: 14) {
+                GemArt(kind: kind).frame(width: 45, height: 55)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(kind.name) • \(group.count)").font(.headline)
+                    Text("Total \(total) moedas").font(.caption).foregroundStyle(Color.deepGold)
+                }
+            }
+        }.padding(14).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 18))
     }
     private func gemRow(_ gem: Gem) -> some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -138,8 +144,8 @@ struct CharacterView: View {
                     Text("Botas Nv. \(game.state.staminaLevel)").font(.caption.bold())
                 }
                 Panel {
-                    Text("Protótipo 0.3").font(.headline)
-                    Text("Progresso salvo neste aparelho. Esta versão ainda não tem compras, anúncios, conta online ou multiplayer.").font(.caption).foregroundStyle(.secondary)
+                    Text("Sua jornada").font(.headline)
+                    Text("Recorde: \(game.state.deepestRow) m • \(game.state.ownedPickaxes.count) picaretas conquistadas").font(.caption).foregroundStyle(.secondary)
                 }
                 Button("Começar novo jogo", role: .destructive) { resetConfirmation = true }.padding(.vertical)
             }.padding(20)

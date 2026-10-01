@@ -4,13 +4,15 @@ import SwiftUI
 struct CutGemShape: Shape {
     var cuts: Int
     func path(in rect: CGRect) -> Path {
-        let a: CGFloat = cuts >= 1 ? 0.25 : 0
-        let b: CGFloat = cuts >= 2 ? 0.25 : 0
-        let c: CGFloat = cuts >= 3 ? 0.27 : 0
+        let top: CGFloat = cuts >= 1 ? 0.11 : 0
+        let left: CGFloat = cuts >= 2 ? 0.12 : 0
+        let bottom: CGFloat = cuts >= 3 ? 0.86 : 1
+        let right: CGFloat = cuts >= 3 ? 0.9 : 1
+        let bevel: CGFloat = cuts > 0 ? 0.22 : 0
         let points: [CGPoint] = [
-            .init(x: a, y: 0), .init(x: 1-b, y: 0), .init(x: 1, y: b),
-            .init(x: 1, y: 1-c), .init(x: 1-c, y: 1), .init(x: c, y: 1),
-            .init(x: 0, y: 1-c), .init(x: 0, y: a)
+            .init(x: left+bevel, y: top), .init(x: right-bevel, y: top), .init(x: right, y: top+bevel),
+            .init(x: right, y: bottom-bevel), .init(x: right-bevel, y: bottom), .init(x: left+bevel, y: bottom),
+            .init(x: left, y: bottom-bevel), .init(x: left, y: top+bevel)
         ]
         var p = Path(); p.addLines(points.map { .init(x: rect.minX + $0.x * rect.width, y: rect.minY + $0.y * rect.height) }); p.closeSubpath(); return p
     }

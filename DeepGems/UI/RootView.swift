@@ -95,7 +95,7 @@ struct BaseView: View {
                     }
                     HStack(spacing: 12) {
                         NavigationLink { CharacterView() } label: {
-                            Image(uiImage: GameArtwork.explorer(game.state.outfit)).resizable().scaledToFill()
+                            Image(uiImage: GameArtwork.portrait(game.state.outfit)).resizable().scaledToFill()
                                 .frame(width: 52, height: 52).clipped().clipShape(Circle()).overlay(Circle().stroke(Color.deepGold, lineWidth: 2))
                         }.accessibilityLabel("Personalizar explorador")
                         VStack(alignment: .leading, spacing: 6) {

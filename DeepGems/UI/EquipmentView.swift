@@ -19,7 +19,7 @@ struct EquipmentView: View {
                     Label("Volte à base para comprar ou trocar equipamentos.", systemImage: "info.circle").font(.caption).foregroundStyle(Color.deepGold)
                 }
                 if section == 0 { pickaxes } else { upgrades }
-                Text("Preços em moedas conquistadas no jogo. Esta versão ainda não tem compras com dinheiro real.").font(.caption2).foregroundStyle(.secondary)
+                Text("Use as moedas das suas descobertas para ir mais longe.").font(.caption2).foregroundStyle(.secondary)
             }.padding(20)
         }.background(Color.deepBackground).toolbar(.hidden, for: .navigationBar)
             .alert("Comprar \(selected.name)?", isPresented: $purchaseConfirmation) {

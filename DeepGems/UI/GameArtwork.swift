@@ -10,6 +10,13 @@ enum GameArtwork {
         let index = PickaxeKind.allCases.firstIndex(of: kind) ?? 0
         return region(name: "PickaxeAtlas", index: index, count: 3)
     }
+    static func portrait(_ outfit: Outfit) -> UIImage {
+        let key = "portrait-\(outfit.rawValue)"
+        if let image = cache[key] { return image }
+        let source = explorer(outfit)
+        guard let cg = source.cgImage, let crop = cg.cropping(to: CGRect(x: CGFloat(cg.width) * 0.24, y: CGFloat(cg.height) * 0.02, width: CGFloat(cg.width) * 0.6, height: CGFloat(cg.height) * 0.3)) else { return source }
+        let image = UIImage(cgImage: crop); cache[key] = image; return image
+    }
     static func terrain(_ index: Int) -> UIImage { region(name: "TerrainAtlas", index: index, count: 4) }
     static func upgrade(_ kind: Upgrade, level: Int, pickaxe: PickaxeKind = .iron) -> UIImage {
         if kind == .pickaxe { return self.pickaxe(pickaxe) }
