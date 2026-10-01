@@ -47,6 +47,15 @@ struct CuttingView: View {
                 }
             }.padding(24)
         }.background(Color.deepBackground.ignoresSafeArea())
+            .safeAreaInset(edge: .top) {
+                if let error = game.saveError {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Este corte ainda não foi salvo").bold()
+                        Text(error).font(.caption)
+                        Button("Tentar salvar novamente") { game.save() }
+                    }.padding().frame(maxWidth: .infinity, alignment: .leading).background(Color.red.opacity(0.3))
+                }
+            }
             .onChange(of: game.state.cutting?.scores.count) { _, _ in angle = 0 }
     }
     private func cutLine(angle: Double, color: Color, dashed: Bool) -> some View {
