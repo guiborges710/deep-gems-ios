@@ -81,7 +81,7 @@ struct ExplorerArt: View {
 
 struct Panel<Content: View>: View {
     @ViewBuilder let content: Content
-    var body: some View { content.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 20)).overlay(RoundedRectangle(cornerRadius: 20).stroke(.white.opacity(0.08))) }
+    var body: some View { VStack(alignment: .leading, spacing: 10) { content }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 20)).overlay(RoundedRectangle(cornerRadius: 20).stroke(.white.opacity(0.08))) }
 }
 
 struct GoldButtonStyle: ButtonStyle {

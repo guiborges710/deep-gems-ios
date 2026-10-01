@@ -70,7 +70,7 @@ struct BaseView: View {
                     ProgressView(value: game.state.levelProgress).tint(.deepTeal)
                     Text("\(game.state.experience) / \(game.state.threshold(for: game.state.level + 1)) XP").font(.caption).foregroundStyle(.secondary)
                 }
-                BaseShowcase(outfit: game.state.outfit, pickaxe: game.state.equippedPickaxe).frame(height: 390)
+                BaseShowcase(outfit: game.state.outfit, pickaxe: game.state.equippedPickaxe).frame(height: 340)
                 Button(action: onExplore) { Label(game.state.expedition == nil ? "Explorar a mina" : "Continuar expedição", systemImage: "mountain.2.fill") }.buttonStyle(GoldButtonStyle())
                 HStack {
                     Label("Recorde: \(game.state.deepestRow) m", systemImage: "arrow.down")
