@@ -1,0 +1,26 @@
+name: iOS MVP checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show toolchain
+        run: xcodebuild -version
+      - name: Test game rules and persistence
+        run: swift test
+      - name: Build iOS app without signing
+        run: >-
+          xcodebuild -project DeepGems.xcodeproj -scheme DeepGems
+          -configuration Debug -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO build

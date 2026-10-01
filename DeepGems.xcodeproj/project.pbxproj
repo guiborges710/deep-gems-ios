@@ -1,0 +1,48 @@
+// !$*UTF8*$!
+{
+ archiveVersion = 1;
+ classes = {};
+ objectVersion = 56;
+ objects = {
+		47E10C6749B046B42F640660 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepGems/Core/GameEngine.swift"; sourceTree = "<group>"; };
+		F0A97BB68063BBADAEE0463C = { isa = PBXBuildFile; fileRef = 47E10C6749B046B42F640660; };
+		F6998292FB688E8FDA5EF883 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepGems/Core/GameModels.swift"; sourceTree = "<group>"; };
+		AA965C1CAB51E6A0A344C6C4 = { isa = PBXBuildFile; fileRef = F6998292FB688E8FDA5EF883; };
+		17B2D1F87DACB4F15AB01303 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepGems/Core/SaveStore.swift"; sourceTree = "<group>"; };
+		2437BF2772BA71664A1FA838 = { isa = PBXBuildFile; fileRef = 17B2D1F87DACB4F15AB01303; };
+		DFECE4EB289C303C3311FD83 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepGems/DeepGemsApp.swift"; sourceTree = "<group>"; };
+		193DE523CA66B179062A26B8 = { isa = PBXBuildFile; fileRef = DFECE4EB289C303C3311FD83; };
+		1A981FFF07D0F13783951FCF = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepGems/UI/CuttingView.swift"; sourceTree = "<group>"; };
+		A84B1CCEB5F34C2E2DD640FA = { isa = PBXBuildFile; fileRef = 1A981FFF07D0F13783951FCF; };
+		5B27D118E93C50D477F41E6E = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepGems/UI/GameStore.swift"; sourceTree = "<group>"; };
+		B8A7D4F1DD201E5F67710911 = { isa = PBXBuildFile; fileRef = 5B27D118E93C50D477F41E6E; };
+		4F575302C6A6A5EA3D876CDE = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepGems/UI/MineScene.swift"; sourceTree = "<group>"; };
+		41E011BB026E0C47D438C2F7 = { isa = PBXBuildFile; fileRef = 4F575302C6A6A5EA3D876CDE; };
+		614CEE89BFC5E60E2177CCEC = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepGems/UI/MineView.swift"; sourceTree = "<group>"; };
+		F78D28C23642881AF382E6F9 = { isa = PBXBuildFile; fileRef = 614CEE89BFC5E60E2177CCEC; };
+		F68F2D448E98FA046E1D16F9 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepGems/UI/RootView.swift"; sourceTree = "<group>"; };
+		74E83DC00629224DC37D2D66 = { isa = PBXBuildFile; fileRef = F68F2D448E98FA046E1D16F9; };
+		319A66C654CF7B95F47FB25E = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepGems/UI/Theme.swift"; sourceTree = "<group>"; };
+		70821B733192D830BB00BFD3 = { isa = PBXBuildFile; fileRef = 319A66C654CF7B95F47FB25E; };
+		A94682FDAB6DD64003F2AFDF = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepGems/UI/WorkshopView.swift"; sourceTree = "<group>"; };
+		25F96C88CC2498B7943CF141 = { isa = PBXBuildFile; fileRef = A94682FDAB6DD64003F2AFDF; };
+		B2B4367B873474FE1C68712A = { isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "DeepGems/Resources/Assets.xcassets"; sourceTree = "<group>"; };
+		FB90684E69A6C96ED866993E = { isa = PBXBuildFile; fileRef = B2B4367B873474FE1C68712A; };
+		38A007151ABE87CC01A5B6E9 = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DeepGems.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BCE16DD0260827ECF338C787 = { isa = PBXGroup; children = (47E10C6749B046B42F640660, F6998292FB688E8FDA5EF883, 17B2D1F87DACB4F15AB01303, DFECE4EB289C303C3311FD83, 1A981FFF07D0F13783951FCF, 5B27D118E93C50D477F41E6E, 4F575302C6A6A5EA3D876CDE, 614CEE89BFC5E60E2177CCEC, F68F2D448E98FA046E1D16F9, 319A66C654CF7B95F47FB25E, A94682FDAB6DD64003F2AFDF, B2B4367B873474FE1C68712A); name = Sources; sourceTree = "<group>"; };
+		FBDC4F23F93125BBEEAE800C = { isa = PBXGroup; children = (38A007151ABE87CC01A5B6E9); name = Products; sourceTree = "<group>"; };
+		64292B1C2B2E13EAD8788FC8 = { isa = PBXGroup; children = (BCE16DD0260827ECF338C787, FBDC4F23F93125BBEEAE800C); sourceTree = "<group>"; };
+		F612CD2E22E187AC48B5913C = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (F0A97BB68063BBADAEE0463C, AA965C1CAB51E6A0A344C6C4, 2437BF2772BA71664A1FA838, 193DE523CA66B179062A26B8, A84B1CCEB5F34C2E2DD640FA, B8A7D4F1DD201E5F67710911, 41E011BB026E0C47D438C2F7, F78D28C23642881AF382E6F9, 74E83DC00629224DC37D2D66, 70821B733192D830BB00BFD3, 25F96C88CC2498B7943CF141); runOnlyForDeploymentPostprocessing = 0; };
+		86F6FE2DD6E869C1842A14B3 = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (FB90684E69A6C96ED866993E); runOnlyForDeploymentPostprocessing = 0; };
+		69680EDE0CF9B24DB8DBFE04 = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		0E8A3AD980EC179856012B7E = { isa = PBXNativeTarget; buildConfigurationList = DC55407B0565717C06CE10A3; buildPhases = (F612CD2E22E187AC48B5913C, 69680EDE0CF9B24DB8DBFE04, 86F6FE2DD6E869C1842A14B3); buildRules = (); dependencies = (); name = DeepGems; productName = DeepGems; productReference = 38A007151ABE87CC01A5B6E9; productType = "com.apple.product-type.application"; };
+		98F54143AB4E86B28C3AFEE0 = { isa = PBXProject; attributes = { BuildIndependentTargetsInParallel = YES; LastUpgradeCheck = 1500; TargetAttributes = { 0E8A3AD980EC179856012B7E = { CreatedOnToolsVersion = 15.0; }; }; }; buildConfigurationList = 90061A5F4E19D1411B425E01; compatibilityVersion = "Xcode 14.0"; developmentRegion = "pt-BR"; hasScannedForEncodings = 0; knownRegions = ("pt-BR", en, Base); mainGroup = 64292B1C2B2E13EAD8788FC8; productRefGroup = FBDC4F23F93125BBEEAE800C; projectDirPath = ""; projectRoot = ""; targets = (0E8A3AD980EC179856012B7E); };
+		ED8772ADEC3A6C25161BC957 = { isa = XCBuildConfiguration; buildSettings = { CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; DEBUG_INFORMATION_FORMAT = dwarf; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG; }; name = Debug; };
+		4D8F54E7CBAF670D9F6C230D = { isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = DeepGems; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.adventure-games"; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait; MARKETING_VERSION = 0.1.0; PRODUCT_BUNDLE_IDENTIFIER = com.guiborges.deepgems; PRODUCT_NAME = "$(TARGET_NAME)"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_EMIT_LOC_STRINGS = YES; TARGETED_DEVICE_FAMILY = 1; }; name = Debug; };
+		00F209874A1F7309F6DCEAA7 = { isa = XCBuildConfiguration; buildSettings = { CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_OPTIMIZATION_LEVEL = "-O"; }; name = Release; };
+		1A6EFC2CD0AF63DD14BE0438 = { isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = DeepGems; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.adventure-games"; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait; MARKETING_VERSION = 0.1.0; PRODUCT_BUNDLE_IDENTIFIER = com.guiborges.deepgems; PRODUCT_NAME = "$(TARGET_NAME)"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_EMIT_LOC_STRINGS = YES; TARGETED_DEVICE_FAMILY = 1; }; name = Release; };
+		90061A5F4E19D1411B425E01 = { isa = XCConfigurationList; buildConfigurations = (ED8772ADEC3A6C25161BC957, 00F209874A1F7309F6DCEAA7); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		DC55407B0565717C06CE10A3 = { isa = XCConfigurationList; buildConfigurations = (4D8F54E7CBAF670D9F6C230D, 1A6EFC2CD0AF63DD14BE0438); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+ };
+ rootObject = 98F54143AB4E86B28C3AFEE0;
+}
