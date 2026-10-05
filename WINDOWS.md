@@ -6,7 +6,7 @@ SwiftUIWeb **0.1.0** está instalado via Swift Package Manager, com versão exat
 
 ## Preparar o Windows uma vez
 
-Instale Git e Swift **6.0 ou superior**, incluindo o compilador C++ e o Windows SDK exigidos pelo Swift, seguindo o guia oficial: https://www.swift.org/install/windows/ . Reabra o PowerShell após a instalação e confirme:
+Instale Git e Swift **6.3.3 ou superior recomendado no Windows**, incluindo o compilador C++ e o Windows SDK exigidos pelo Swift, seguindo o guia oficial: https://www.swift.org/install/windows/ . Reabra o PowerShell após a instalação e confirme:
 
 ```powershell
 git --version
@@ -63,3 +63,5 @@ swift run DeepGemsWebPreview --help
 O workflow `SwiftUIWeb Windows checks` valida resolução, build, testes e exportação no runner Windows. A pasta gerada é disponibilizada como artifact no GitHub Actions, para abrir o HTML mesmo sem instalar Swift no computador.
 
 Fonte da biblioteca: https://github.com/guiborges710/SwiftUIWeb
+
+O CI usa Swift 6.3.3. Swift 6.0.3 apresentou uma incompatibilidade de headers `ucrt` com o SDK moderno do runner; use o toolchain recomendado no Windows. A biblioteca em si declara Swift tools 6.0.

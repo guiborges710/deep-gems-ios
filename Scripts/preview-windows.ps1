@@ -1,7 +1,7 @@
 param([string]$OutputDirectory = "WebPreview", [string]$SavePath)
 $ErrorActionPreference = "Stop"
 if (-not (Get-Command swift -ErrorAction SilentlyContinue)) {
-    throw "Swift 6 ou superior não encontrado. Instale conforme https://www.swift.org/install/windows/ e reabra o PowerShell."
+    throw "Swift não encontrado (recomendado 6.3.3+ no Windows). Instale conforme https://www.swift.org/install/windows/ e reabra o PowerShell."
 }
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
 # Resolve user-supplied relative paths before switching to the repository root.
