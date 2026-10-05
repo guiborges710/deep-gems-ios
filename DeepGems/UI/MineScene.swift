@@ -158,7 +158,7 @@ final class MineScene: SKScene {
         guard expedition != nil else { return }
         let point = center(for: position)
         if let weapon = weaponNode {
-            let hand = weapon.convert(.zero, to: self)
+            let hand = weapon.convert(CGPoint.zero, to: self)
             // The head lies above/right of the grip in the unrotated texture.
             let aim = atan2(point.y - hand.y, point.x - hand.x) - 0.95
             let rest = CGFloat(-MinerEquipmentRig.restDegrees * .pi / 180)
