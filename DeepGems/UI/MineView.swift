@@ -17,13 +17,13 @@ struct MineView: View {
                         Text("Recorde \(game.state.deepestRow) m").font(.caption2).foregroundStyle(.secondary)
                     }
                     Text(MineRegion.at(e.player.row).name).font(.caption).foregroundStyle(Color.deepGold)
-                    ObjectiveCard(state: game.state)
+                    ObjectiveCard(state: game.state, compact: true)
                     HStack(spacing: 10) {
                         meter(value: e.energy, maximum: game.state.maximumEnergy, symbol: "bolt.fill", tint: .deepTeal)
                         meter(value: e.carried.count, maximum: game.state.capacity, symbol: "backpack.fill", tint: .deepGold)
                     }
                     SpriteView(scene: game.mineScene, isPaused: false, preferredFramesPerSecond: 60)
-                        .frame(maxWidth: .infinity).frame(height: max(80, geometry.size.height - (geometry.size.height < 650 ? 410 : 420)))
+                        .frame(maxWidth: .infinity).frame(height: max(80, geometry.size.height - 350))
                         .clipShape(RoundedRectangle(cornerRadius: 18))
                         .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.deepGold.opacity(0.3)))
                         .accessibilityLabel("Mina. Toque nos blocos dourados ao lado do explorador ou use as setas.")
@@ -40,14 +40,6 @@ struct MineView: View {
                             } label: { Image(systemName: "arrow.up.arrow.down.square.fill") }
                         }
                     }.font(.caption.bold()).foregroundStyle(Color.deepTeal)
-                    HStack(spacing: 8) {
-                        ForEach(GemKind.allCases) { kind in
-                            VStack(spacing: 2) {
-                                GemArt(kind: kind).frame(height: geometry.size.height < 650 ? 24 : 36)
-                                Text("\(e.carried.filter { $0.kind == kind }.count)").font(.caption.bold()).monospacedDigit()
-                            }.frame(maxWidth: .infinity).padding(5).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 9))
-                        }
-                    }.accessibilityLabel("Saque: \(e.carried.count) pedras")
                     Text(status(e)).font(.caption).foregroundStyle(e.energy == 0 || e.carried.count >= game.state.capacity ? Color.deepGold : Color.white.opacity(0.75))
                         .lineLimit(2).frame(height: 30)
                     HStack(spacing: 8) {

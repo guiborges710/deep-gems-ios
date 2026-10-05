@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ObjectiveCard: View {
     let state: GameState
+    var compact = false
     var body: some View {
         if let goal = state.currentGoal {
             VStack(alignment: .leading, spacing: 5) {
@@ -11,7 +12,7 @@ struct ObjectiveCard: View {
                     Text("+\(goal.reward) ●").font(.caption).foregroundStyle(Color.deepGold)
                 }
                 ProgressView(value: Double(min(goal.progress, goal.target)), total: Double(goal.target)).tint(.deepGold)
-                Text("\(min(goal.progress, goal.target)) / \(goal.target)").font(.caption2).foregroundStyle(.secondary)
+                if !compact { Text("\(min(goal.progress, goal.target)) / \(goal.target)").font(.caption2).foregroundStyle(.secondary) }
             }.padding(10).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 12))
         } else {
             Label("Sua base prosperou. Continue descobrindo!", systemImage: "checkmark.seal.fill").font(.caption).foregroundStyle(Color.deepGold)

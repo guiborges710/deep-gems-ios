@@ -1,7 +1,7 @@
 name: iOS MVP checks
 on:
   push:
-    branches: [main]
+    branches: [main, feature/visible-mining-progression]
   pull_request:
 permissions:
   contents: read
