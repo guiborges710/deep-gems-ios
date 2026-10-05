@@ -55,3 +55,9 @@ O workflow iOS executa `swift test`, compila sem assinatura e publica as captura
 The camp now uses CampProgressionAtlas: three illustrated scenes created from the supplied reference and BaseV2, with matching navy stone, timber textures and amber lanterns. MineStructureAtlas supplies transparent ladder, lantern and elevator sprites in the same style. Camp scene height and player size increased, and mine region tints reduced to retain painted rock detail. The previous vector camp geometry and symbolic structure boxes were removed. No game rules or save format changed.
 
 Assets were created with built-in image generation. Prompts: three equal camp panels (tent, cabin/workshop/storage, two-storey mining headquarters), same camera and empty foreground for player; three isolated transparent structure panels (wood ladder, amber hanging lantern, timber/iron elevator). Both use the original reference as mandatory style guidance.
+
+## Pickaxe hand attachment fix
+
+Shared MinerEquipmentRig coordinates attach each alpha-trimmed tool to the original ExplorerV2 glove at (0.321, 0.615). Grip X is calibrated independently for iron, copper and amethyst; aspect ratio is preserved. The original glove/fingers are composited in front of the shaft in both SwiftUI and SpriteKit, replacing the ellipse. Rest orientation keeps the head outside the torso. SpriteKit swings toward the selected block around that exact attachment and returns to an absolute rest angle, avoiding drift on repeated taps.
+
+Validation: equipment attachment tests cover three models at small mine and large showcase sizes. CI captures full character screens for all models. On device, equip each model, open character/base, mine above/below/left/right and tap repeatedly; confirm the shaft stays behind the glove throughout the swing.

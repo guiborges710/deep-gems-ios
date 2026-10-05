@@ -136,3 +136,33 @@ final class ProgressionTests: XCTestCase {
         XCTAssertTrue(restored.mineChanges.first { $0.position == GridPosition(column: 2, row: 1) }?.isEmpty ?? false)
     }
 }
+
+final class EquipmentAttachmentTests: XCTestCase {
+    func testGripStaysAtHandForEveryToolAndDisplaySize() {
+        for kind in PickaxeKind.allCases {
+            for bodyHeight in [54.0, 155.0, 320.0] {
+                for aspect in [0.95, 1.0, 1.05] {
+                    let bodyWidth = bodyHeight * 2 / 3
+                    let anchor = MinerEquipmentRig.grip(kind)
+                    let center = MinerEquipmentRig.toolCenter(kind: kind, bodyWidth: bodyWidth, bodyHeight: bodyHeight, toolAspect: aspect)
+                    let height = bodyHeight * MinerEquipmentRig.toolHeight
+                    let width = height * aspect
+                    // Actual top-left image location plus its normalized anchor must land on the glove.
+                    XCTAssertEqual(center.x - width / 2 + anchor.x * width, (MinerEquipmentRig.handX - 0.5) * bodyWidth, accuracy: 0.000001)
+                    XCTAssertEqual(center.y - height / 2 + anchor.y * height, (MinerEquipmentRig.handY - 0.5) * bodyHeight, accuracy: 0.000001)
+                    // SpriteKit flips Y, but its anchor represents that same glove point.
+                    let spriteBottom = -(MinerEquipmentRig.handY - 0.5) * bodyHeight - (1 - anchor.y) * height
+                    XCTAssertEqual(-(spriteBottom + (1 - anchor.y) * height), center.y - height / 2 + anchor.y * height, accuracy: 0.000001)
+                }
+            }
+        }
+    }
+    func testEachModelHasItsOwnGripOnTheLowerShaft() {
+        let anchors = PickaxeKind.allCases.map { MinerEquipmentRig.grip($0) }
+        XCTAssertEqual(Set(anchors.map(\.x)).count, 3)
+        for anchor in anchors {
+            XCTAssertTrue((0.19...0.23).contains(anchor.x))
+            XCTAssertTrue((0.72...0.8).contains(anchor.y))
+        }
+    }
+}

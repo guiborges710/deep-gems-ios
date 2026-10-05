@@ -93,6 +93,18 @@ enum GameArtwork {
         cache[key] = result
         return result
     }
+    // Only the original glove/fingers are composited above the shaft, at their original coordinates.
+    static let handRect = CGRect(x: 0.244, y: 0.573, width: 0.152, height: 0.084)
+    static func grippingHand(_ outfit: Outfit, tier: Int) -> UIImage {
+        let key = "hand-\(outfit.rawValue)-\(tier)"
+        if let image = cache[key] { return image }
+        guard let source = explorer(outfit, tier: tier).cgImage,
+              let crop = source.cropping(to: CGRect(x: handRect.minX * CGFloat(source.width),
+                                                   y: handRect.minY * CGFloat(source.height),
+                                                   width: handRect.width * CGFloat(source.width),
+                                                   height: handRect.height * CGFloat(source.height))) else { return UIImage() }
+        let result = UIImage(cgImage: crop); cache[key] = result; return result
+    }
     private static func trimmed(_ image: UIImage) -> UIImage {
         guard let source = image.cgImage else { return image }
         let w = source.width, h = source.height
@@ -159,24 +171,31 @@ struct ExplorerShowcase: View {
     var staminaLevel = 1
     var body: some View {
         GeometryReader { geometry in
-            let image = GameArtwork.explorer(outfit, tier: backpackLevel >= 3 || pickaxe == .amethyst ? 3 : (backpackLevel >= 2 || pickaxe == .copper ? 2 : 1))
+            let tier = backpackLevel >= 3 || pickaxe == .amethyst ? 3 : (backpackLevel >= 2 || pickaxe == .copper ? 2 : 1)
+            let image = GameArtwork.explorer(outfit, tier: tier)
             let ratio = image.size.width / max(1, image.size.height)
             let h = min(geometry.size.height, geometry.size.width / ratio)
             let w = h * ratio
+            let tool = GameArtwork.pickaxe(pickaxe)
+            let toolH = h * MinerEquipmentRig.toolHeight
+            let toolW = toolH * tool.size.width / max(1, tool.size.height)
+            let grip = MinerEquipmentRig.grip(pickaxe)
+            let center = MinerEquipmentRig.toolCenter(kind: pickaxe, bodyWidth: w, bodyHeight: h, toolAspect: tool.size.width / max(1, tool.size.height))
             ZStack {
                 if backpackLevel >= 1 {
                     UpgradeArt(kind: .backpack, level: backpackLevel).frame(width: w * 0.48, height: h * 0.34)
                         .offset(x: -w * 0.27, y: -h * 0.03)
                 }
                 Image(uiImage: image).resizable().frame(width: w, height: h)
-                // Grip is calibrated against ExplorerV2's left glove and the normalized pickaxe shaft.
-                Image(uiImage: GameArtwork.pickaxe(pickaxe)).resizable().scaledToFit()
-                    .frame(width: h * 0.42, height: h * 0.42)
-                    .rotationEffect(.degrees(-18), anchor: UnitPoint(x: 0.26, y: 0.75))
-                    .position(x: geometry.size.width / 2 - w * 0.19 + h * 0.42 * 0.24, y: geometry.size.height / 2 + h * 0.14 - h * 0.42 * 0.25)
+                Image(uiImage: tool).resizable()
+                    .frame(width: toolW, height: toolH)
+                    .rotationEffect(.degrees(MinerEquipmentRig.restDegrees), anchor: UnitPoint(x: grip.x, y: grip.y))
+                    .position(x: geometry.size.width / 2 + center.x, y: geometry.size.height / 2 + center.y)
                     .allowsHitTesting(false)
-                Ellipse().fill(Color(red: 0.38, green: 0.20, blue: 0.09)).frame(width: w * 0.075, height: h * 0.023)
-                    .offset(x: -w * 0.19, y: h * 0.14)
+                Image(uiImage: GameArtwork.grippingHand(outfit, tier: tier)).resizable()
+                    .frame(width: w * GameArtwork.handRect.width, height: h * GameArtwork.handRect.height)
+                    .offset(x: (GameArtwork.handRect.midX - 0.5) * w, y: (GameArtwork.handRect.midY - 0.5) * h)
+                    .allowsHitTesting(false)
                 if staminaLevel >= 2 {
                     UpgradeArt(kind: .stamina, level: staminaLevel).frame(width: w * 0.78, height: h * 0.2).offset(y: h * 0.39)
                 }

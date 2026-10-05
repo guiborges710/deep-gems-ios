@@ -32,7 +32,7 @@ jobs:
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
           xcrun simctl install "$SIMULATOR_ID" .build-ios/Build/Products/Debug-iphonesimulator/DeepGems.app
           mkdir -p visual-checks
-          for SCREEN in base starter camp2 camp3 depth shop upgrades mine character workshop reward cut facets result; do
+          for SCREEN in base starter camp2 camp3 depth shop upgrades mine character grip-iron grip-copper grip-amethyst workshop reward cut facets result; do
             FLAGS="-deepgems-screenshot -deepgems-preview"
             case "$SCREEN" in
               starter) FLAGS="$FLAGS -deepgems-starter-preview" ;;
@@ -43,7 +43,9 @@ jobs:
               upgrades) FLAGS="$FLAGS -deepgems-shop-preview -deepgems-upgrades-preview" ;;
               mine) FLAGS="$FLAGS -deepgems-mine-preview" ;;
               workshop) FLAGS="$FLAGS -deepgems-workshop-preview" ;;
-              character) FLAGS="$FLAGS -deepgems-character-preview" ;;
+              character|grip-iron) FLAGS="$FLAGS -deepgems-character-preview" ;;
+              grip-copper) FLAGS="$FLAGS -deepgems-character-preview -deepgems-copper-preview" ;;
+              grip-amethyst) FLAGS="$FLAGS -deepgems-character-preview -deepgems-amethyst-preview" ;;
               reward) FLAGS="$FLAGS -deepgems-shop-preview -deepgems-reward-preview" ;;
               cut) FLAGS="$FLAGS -deepgems-cut-preview" ;;
               facets) FLAGS="$FLAGS -deepgems-cut-preview -deepgems-cut-facets-preview" ;;

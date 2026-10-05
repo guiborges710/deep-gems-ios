@@ -90,3 +90,26 @@ extension GameState {
     }
     public func hasLadder(at position: GridPosition) -> Bool { structures.contains { $0.kind == .ladder && $0.position == position } }
 }
+
+/// Coordinates use the trimmed pickaxe image and ExplorerV2, with Y increasing downward.
+/// Keep both renderers on the same attachment instead of guessing offsets independently.
+public enum MinerEquipmentRig {
+    public static let handX = 0.321
+    public static let handY = 0.615
+    public static let toolHeight = 0.48
+    public static let restDegrees = -65.0
+    public static func grip(_ kind: PickaxeKind) -> (x: Double, y: Double) {
+        // Centers of the opaque shaft at 76% of each alpha-trimmed atlas cell.
+        switch kind {
+        case .iron: return (0.215, 0.76)
+        case .copper: return (0.204, 0.76)
+        case .amethyst: return (0.202, 0.76)
+        }
+    }
+    public static func toolCenter(kind: PickaxeKind, bodyWidth: Double, bodyHeight: Double, toolAspect: Double) -> (x: Double, y: Double) {
+        let anchor = grip(kind)
+        let height = bodyHeight * toolHeight
+        return ((handX - 0.5) * bodyWidth + (0.5 - anchor.x) * height * toolAspect,
+                (handY - 0.5) * bodyHeight + (0.5 - anchor.y) * height)
+    }
+}

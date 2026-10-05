@@ -120,14 +120,21 @@ final class MineScene: SKScene {
             let pack = SKSpriteNode(texture: texture("pack-\(backpackLevel >= 3 ? 2 : (backpackLevel >= 2 ? 1 : 0))") { GameArtwork.upgrade(.backpack, level: backpackLevel) })
             pack.size = .init(width: w*0.48, height: h*0.34); pack.position = .init(x: -w*0.27, y: h*0.03); rig.addChild(pack)
         }
-        let weapon = SKSpriteNode(texture: texture("weapon-\(pickaxe.rawValue)") { GameArtwork.pickaxe(pickaxe) })
-        weapon.size = .init(width: h*0.42, height: h*0.42); weapon.anchorPoint = .init(x: 0.26, y: 0.25)
-        weapon.position = .init(x: -w*0.19, y: -h*0.14); weapon.zRotation = CGFloat.pi * 18 / 180; weapon.zPosition = 3
+        let tool = GameArtwork.pickaxe(pickaxe)
+        let grip = MinerEquipmentRig.grip(pickaxe)
+        let weapon = SKSpriteNode(texture: texture("weapon-\(pickaxe.rawValue)") { tool })
+        let toolH = h * MinerEquipmentRig.toolHeight
+        weapon.size = .init(width: toolH * tool.size.width / max(1, tool.size.height), height: toolH)
+        weapon.anchorPoint = .init(x: grip.x, y: 1 - grip.y)
+        weapon.position = .init(x: (MinerEquipmentRig.handX - 0.5) * w, y: (0.5 - MinerEquipmentRig.handY) * h)
+        weapon.zRotation = -MinerEquipmentRig.restDegrees * .pi / 180; weapon.zPosition = 3
         rig.addChild(weapon); weaponNode = weapon
         let body = SKSpriteNode(texture: texture("explorer-\(outfit.rawValue)-\(state.characterTier)") { image })
         body.size = .init(width: w, height: h); body.zPosition = 2; rig.addChild(body)
-        let glove = SKShapeNode(ellipseOf: .init(width: w * 0.075, height: h * 0.023))
-        glove.position = weapon.position; glove.fillColor = .brown; glove.strokeColor = .clear; glove.zPosition = 4; rig.addChild(glove)
+        let glove = SKSpriteNode(texture: texture("hand-\(outfit.rawValue)-\(state.characterTier)") { GameArtwork.grippingHand(outfit, tier: state.characterTier) })
+        glove.size = .init(width: w * GameArtwork.handRect.width, height: h * GameArtwork.handRect.height)
+        glove.position = .init(x: (GameArtwork.handRect.midX - 0.5) * w, y: (0.5 - GameArtwork.handRect.midY) * h)
+        glove.zPosition = 4; rig.addChild(glove)
         if staminaLevel >= 2 {
             let boots = SKSpriteNode(texture: texture("boots-\(staminaLevel >= 3 ? 2 : 1)") { GameArtwork.upgrade(.stamina, level: staminaLevel) })
             boots.size = .init(width: w*0.78, height: h*0.2); boots.position.y = -h*0.39; boots.zPosition = 3; rig.addChild(boots)
@@ -142,7 +149,18 @@ final class MineScene: SKScene {
     func strike(at position: GridPosition) {
         guard expedition != nil else { return }
         let point = center(for: position)
-        weaponNode?.run(.sequence([.rotate(byAngle: -0.7, duration: 0.05), .rotate(byAngle: 1.1, duration: 0.09), .rotate(byAngle: -0.4, duration: 0.12)]))
+        if let weapon = weaponNode {
+            let hand = weapon.convert(.zero, to: self)
+            // The head lies above/right of the grip in the unrotated texture.
+            let aim = atan2(point.y - hand.y, point.x - hand.x) - 0.95
+            let rest = CGFloat(-MinerEquipmentRig.restDegrees * .pi / 180)
+            weapon.removeAction(forKey: "mining-swing")
+            weapon.run(.sequence([
+                .rotate(toAngle: rest + 0.25, duration: 0.06, shortestUnitArc: true),
+                .rotate(toAngle: aim, duration: 0.10, shortestUnitArc: true),
+                .rotate(toAngle: rest, duration: 0.14, shortestUnitArc: true)
+            ]), withKey: "mining-swing")
+        }
         if let player = playerNode {
             let dx = point.x-player.position.x, dy = point.y-player.position.y
             player.run(.sequence([.moveBy(x: dx*0.1, y: dy*0.1, duration: 0.06), .moveBy(x: -dx*0.1, y: -dy*0.1, duration: 0.1)]))

@@ -34,6 +34,8 @@ final class GameStore: ObservableObject {
             if args.contains("-deepgems-starter-preview") { state = GameState(); state.hasSeenTutorial = true }
             if args.contains("-deepgems-camp2-preview") { state.campLevel = 2; state.backpackLevel = 2 }
             if args.contains("-deepgems-camp3-preview") { state.campLevel = 3; state.backpackLevel = 3; state.relics = Array(Progression.relicPositions.keys).sorted() }
+            if args.contains("-deepgems-copper-preview") { state.ownedPickaxes = [.iron, .copper]; state.equippedPickaxe = .copper }
+            if args.contains("-deepgems-amethyst-preview") { state.ownedPickaxes = PickaxeKind.allCases; state.equippedPickaxe = .amethyst }
             if args.contains("-deepgems-depth-preview") {
                 state.pickaxeLevel = 20; state.staminaLevel = 100; state.backpackLevel = 100
                 try? GameEngine.startExpedition(state: &state, seed: 710)
