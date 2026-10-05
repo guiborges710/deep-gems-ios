@@ -53,7 +53,7 @@ enum GameArtwork {
                 let alpha = Double(bytes[i + 3])
                 if tier == 1 {
                     bytes[i] = UInt8(min(alpha, g * 0.85)); bytes[i + 1] = UInt8(min(alpha, g * 0.65)); bytes[i + 2] = UInt8(min(alpha, g * 0.42))
-                } else if outfit == .purple || tier == 3 {
+                } else if outfit == .purple || (tier == 3 && outfit == .teal) {
                     bytes[i] = UInt8(min(alpha, b * 0.95)); bytes[i + 1] = UInt8(min(alpha, r * 1.05)); bytes[i + 2] = UInt8(min(alpha, g * 1.1))
                 } else if outfit == .orange {
                     bytes[i] = UInt8(min(alpha, g * 1.2)); bytes[i + 1] = UInt8(min(alpha, b * 0.65)); bytes[i + 2] = UInt8(min(alpha, r * 0.7))
@@ -170,7 +170,7 @@ struct ExplorerShowcase: View {
                     .allowsHitTesting(false)
                 Ellipse().fill(Color(red: 0.38, green: 0.20, blue: 0.09)).frame(width: w * 0.075, height: h * 0.023)
                     .offset(x: -w * 0.19, y: h * 0.14)
-                if staminaLevel >= 3 {
+                if staminaLevel >= 2 {
                     UpgradeArt(kind: .stamina, level: staminaLevel).frame(width: w * 0.78, height: h * 0.2).offset(y: h * 0.39)
                 }
             }.frame(width: geometry.size.width, height: geometry.size.height)

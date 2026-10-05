@@ -14,7 +14,7 @@ struct MineView: View {
                     HStack {
                         Text("Profundidade \(e.player.row) m").font(.system(.title2, design: .serif, weight: .bold))
                         Spacer()
-                        Text("Recorde \(game.state.deepestRow) m").font(.caption2).foregroundStyle(.secondary)
+                        Text("Recorde \(game.state.deepestRow) m • \(game.state.coins) ●").font(.caption2).foregroundStyle(.secondary)
                     }
                     Text(MineRegion.at(e.player.row).name).font(.caption).foregroundStyle(Color.deepGold)
                     ObjectiveCard(state: game.state, compact: true)

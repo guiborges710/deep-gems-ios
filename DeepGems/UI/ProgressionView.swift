@@ -23,6 +23,7 @@ struct ObjectiveCard: View {
 /// Native vector buildings let each upgrade change the actual scene, without replacing the existing art assets.
 struct CampLandscape: View {
     let level: Int
+    var relics: [String] = []
     var body: some View {
         GeometryReader { g in
             ZStack {
@@ -56,6 +57,12 @@ struct CampLandscape: View {
                     }
                     Image(systemName: "flame.fill").font(.system(size: 24)).foregroundStyle(.orange)
                 }.padding(30).offset(y: 95)
+                if !relics.isEmpty {
+                    HStack(spacing: 6) {
+                        ForEach(relics, id: \.self) { relic in RelicArt(relic: relic).frame(width: 25, height: 40) }
+                    }.padding(8).background(Color.deepPanel.opacity(0.9), in: RoundedRectangle(cornerRadius: 8))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.deepGold)).offset(x: 65, y: 92)
+                }
                 if level >= 2 {
                     HStack(spacing: 35) {
                         ForEach(0..<3) { _ in Circle().fill(Color.deepGold).frame(width: 7, height: 7).shadow(color: .yellow, radius: 9) }
@@ -100,7 +107,7 @@ struct CampView: View {
                     Text("\(game.state.coins) ●").font(.headline).foregroundStyle(Color.deepGold)
                 }
                 ObjectiveCard(state: game.state)
-                CampLandscape(level: game.state.campLevel)
+                CampLandscape(level: game.state.campLevel, relics: game.state.relics)
                     .overlay(alignment: .bottomLeading) {
                         ExplorerShowcase(outfit: game.state.outfit, pickaxe: game.state.equippedPickaxe, backpackLevel: game.state.backpackLevel, staminaLevel: game.state.staminaLevel)
                             .frame(width: 100, height: 155).padding(.leading, 16).padding(.bottom, 3)
@@ -136,7 +143,7 @@ struct CampView: View {
                     Text("Exposição de descobertas").font(.headline)
                     if game.state.relics.isEmpty { Text("Investigue os blocos marcados com ? na mina.").font(.caption).foregroundStyle(.secondary) }
                     ForEach(game.state.relics, id: \.self) { relic in
-                        HStack { Image(systemName: "sparkles").foregroundStyle(Color.deepGold); Text(relic).font(.subheadline); Spacer(); Image(systemName: "checkmark.seal.fill").foregroundStyle(Color.deepTeal) }
+                        HStack { RelicArt(relic: relic).frame(width: 28, height: 40); Text(relic).font(.subheadline); Spacer(); Image(systemName: "checkmark.seal.fill").foregroundStyle(Color.deepTeal) }
                     }
                 }.padding().frame(maxWidth: .infinity, alignment: .leading).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 16))
                 Button("Como jogar") { showHelp = true }.font(.caption)
@@ -163,26 +170,16 @@ struct MineOverview: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 8) {
-                    CampLandscape(level: game.state.campLevel)
+                    CampLandscape(level: game.state.campLevel, relics: game.state.relics)
                     Text("Claro: escavado • colorido: investigado • escuro: desconhecido").font(.caption2)
-                    // Draw only explored blocks. Generated but unvisited ore is never disclosed by the map.
-                    Canvas { context, size in
-                        let cell = size.width / CGFloat(GameEngine.columns)
-                        for tile in game.state.mineChanges {
-                            let rect = CGRect(x: CGFloat(tile.position.column) * cell + 1, y: CGFloat(tile.position.row) * 14 + 1, width: cell - 2, height: 12)
-                            let region = MineRegion.at(tile.position.row)
-                            let color: Color = tile.isEmpty ? .deepGold : (region == .earth ? .brown : (region == .copperCaves ? .orange : .purple))
-                            context.fill(Path(roundedRect: rect, cornerRadius: 2), with: .color(color.opacity(tile.isEmpty ? 0.8 : 0.35)))
+                    let tilesByChunk = Dictionary(grouping: game.state.mineChanges) { $0.position.row / 40 }
+                    let structuresByChunk = Dictionary(grouping: game.state.structures) { $0.position.row / 40 }
+                    LazyVStack(spacing: 0) {
+                        ForEach(0..<((game.state.deepestRow + 43) / 40), id: \.self) { chunk in
+                            MineMapSlice(firstRow: chunk * 40, rowCount: min(40, game.state.deepestRow + 4 - chunk * 40),
+                                         tiles: tilesByChunk[chunk] ?? [], structures: structuresByChunk[chunk] ?? [], player: game.state.expedition?.player)
                         }
-                        for structure in game.state.structures {
-                            let point = CGPoint(x: (CGFloat(structure.position.column) + 0.5) * cell, y: CGFloat(structure.position.row) * 14 + 7)
-                            context.draw(Text(structure.kind == .light ? "✦" : (structure.kind == .ladder ? "≡" : "↕")).font(.caption2).foregroundColor(.white), at: point)
-                        }
-                        if let player = game.state.expedition?.player {
-                            let point = CGPoint(x: (CGFloat(player.column) + 0.5) * cell, y: CGFloat(player.row) * 14 + 7)
-                            context.fill(Path(ellipseIn: CGRect(x: point.x - 4, y: point.y - 4, width: 8, height: 8)), with: .color(.deepTeal))
-                        }
-                    }.frame(height: CGFloat(game.state.deepestRow + 4) * 14).background(Color.black.opacity(0.35))
+                    }.background(Color.black.opacity(0.35))
                     Text("\(game.state.deepestRow) m explorados. O restante aguarda suas descobertas.").font(.caption)
                 }.padding(16)
             }.background(Color.deepBackground).navigationTitle("Sua escavação")
@@ -208,5 +205,46 @@ struct MineConstructionPanel: View {
                 }
             }
         }.padding(24).background(Color.deepBackground)
+    }
+}
+
+struct RelicArt: View {
+    let relic: String
+    private var symbol: String { relic.contains("Fóssil") ? "leaf.fill" : (relic.contains("Ídolo") ? "sun.max.fill" : "diamond.fill") }
+    private var color: Color { relic.contains("Fóssil") ? .orange : (relic.contains("Ídolo") ? .deepGold : .purple) }
+    var body: some View {
+        VStack(spacing: 2) {
+            Image(systemName: symbol).resizable().scaledToFit().foregroundStyle(color.gradient).shadow(color: color.opacity(0.5), radius: 5)
+            RoundedRectangle(cornerRadius: 2).fill(Color.brown.gradient).frame(height: 6)
+        }.accessibilityLabel(relic)
+    }
+}
+
+/// The overview also renders in chunks so a deep mine never creates one enormous drawing surface.
+private struct MineMapSlice: View {
+    let firstRow: Int
+    let rowCount: Int
+    let tiles: [MineTile]
+    let structures: [MineStructure]
+    let player: GridPosition?
+    var body: some View {
+        Canvas { context, size in
+            let cell = size.width / CGFloat(GameEngine.columns)
+            for tile in tiles {
+                let rect = CGRect(x: CGFloat(tile.position.column) * cell + 1, y: CGFloat(tile.position.row - firstRow) * 14 + 1, width: cell - 2, height: 12)
+                let region = MineRegion.at(tile.position.row)
+                let color: Color = tile.isEmpty ? .deepGold : (region == .earth ? .brown : (region == .copperCaves ? .orange : .purple))
+                context.fill(Path(roundedRect: rect, cornerRadius: 2), with: .color(color.opacity(tile.isEmpty ? 0.8 : 0.35)))
+            }
+            for structure in structures {
+                let point = CGPoint(x: (CGFloat(structure.position.column) + 0.5) * cell, y: CGFloat(structure.position.row - firstRow) * 14 + 7)
+                context.draw(Text(structure.kind == .light ? "✦" : (structure.kind == .ladder ? "≡" : "↕")).font(.caption2).foregroundColor(.white), at: point)
+            }
+            if let player, (firstRow..<(firstRow + rowCount)).contains(player.row) {
+                let point = CGPoint(x: (CGFloat(player.column) + 0.5) * cell, y: CGFloat(player.row - firstRow) * 14 + 7)
+                context.fill(Path(ellipseIn: CGRect(x: point.x - 4, y: point.y - 4, width: 8, height: 8)), with: .color(.deepTeal))
+            }
+        }.frame(height: CGFloat(rowCount) * 14)
+            .overlay(alignment: .topTrailing) { Text("\(firstRow) m").font(.caption2).foregroundStyle(.white.opacity(0.6)) }
     }
 }

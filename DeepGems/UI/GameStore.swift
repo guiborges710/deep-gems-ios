@@ -113,6 +113,9 @@ final class GameStore: ObservableObject {
     func start() { change { try GameEngine.startExpedition(state: &$0) } }
     func mine(at position: GridPosition) {
         let before = state.expedition?.carried.count ?? 0
+        let beforeRelics = state.relics.count
+        let beforeGoals = state.completedGoals.count
+        let beforeRegion = MineRegion.at(state.expedition?.player.row ?? 0)
         let beforeEnergy = state.expedition?.energy
         miningNotice = nil
         guard change(quiet: true, { try GameEngine.act(state: &$0, at: position) }) else { return }
@@ -123,6 +126,15 @@ final class GameStore: ObservableObject {
         if (state.expedition?.carried.count ?? 0) > before {
             mineScene.discovery(at: position)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
+        }
+        if state.relics.count > beforeRelics {
+            miningNotice = "Descoberta: " + (state.relics.last ?? "relíquia")
+            mineScene.discovery(at: position, text: "Relíquia encontrada!")
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        } else if state.completedGoals.count > beforeGoals {
+            miningNotice = "Objetivo concluído! Recompensa recebida."
+        } else if MineRegion.at(state.expedition?.player.row ?? 0) != beforeRegion {
+            miningNotice = "Nova região: " + MineRegion.at(state.expedition?.player.row ?? 0).name
         }
     }
     func move(column: Int, row: Int) {

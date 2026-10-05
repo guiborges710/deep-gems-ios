@@ -37,7 +37,8 @@ public enum GameEngine {
             if expedition.tiles[index].remaining == 0 {
                 state.experience += 4
                 // Resources do not occupy gem slots; even the early rocks advance construction.
-                if position.row % 2 == 0 { state.copper += 1 } else { state.iron += 1 }
+                let yield = Progression.resourceYield(at: position)
+                state.copper += yield.copper; state.iron += yield.iron
                 if let relic = Progression.relicPositions.first(where: { $0.value == position })?.key,
                    !state.relics.contains(relic) { state.relics.append(relic) }
                 if position == Progression.secretEntrance {

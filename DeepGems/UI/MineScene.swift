@@ -89,6 +89,12 @@ final class MineScene: SKScene {
                 highlight.strokeColor = .systemOrange; highlight.lineWidth = 2; highlight.glowWidth = 3; highlight.zPosition = 3
                 addChild(highlight)
             }
+            if !tile.isEmpty && tile.gem == nil {
+                let ore = SKShapeNode(rectOf: .init(width: tileSize * 0.12, height: tileSize * 0.07), cornerRadius: 2)
+                ore.position = .init(x: point.x - tileSize * 0.16, y: point.y + tileSize * 0.1)
+                ore.fillColor = tile.position.row % 2 == 0 ? .systemOrange : .lightGray
+                ore.strokeColor = .clear; ore.zPosition = 2; addChild(ore)
+            }
             if let gem = tile.gem, !tile.isEmpty {
                 let crystal = SKSpriteNode(texture: texture("gem-\(gem.kind.rawValue)") { GameArtwork.gem(gem.kind) })
                 crystal.size = .init(width: tileSize * 0.58, height: tileSize * 0.7)
@@ -117,12 +123,12 @@ final class MineScene: SKScene {
         weapon.size = .init(width: h*0.42, height: h*0.42); weapon.anchorPoint = .init(x: 0.26, y: 0.25)
         weapon.position = .init(x: -w*0.19, y: -h*0.14); weapon.zRotation = CGFloat.pi * 18 / 180; weapon.zPosition = 3
         rig.addChild(weapon); weaponNode = weapon
-        let body = SKSpriteNode(texture: texture("explorer-\(outfit.rawValue)") { image })
+        let body = SKSpriteNode(texture: texture("explorer-\(outfit.rawValue)-\(state.characterTier)") { image })
         body.size = .init(width: w, height: h); body.zPosition = 2; rig.addChild(body)
         let glove = SKShapeNode(ellipseOf: .init(width: w * 0.075, height: h * 0.023))
         glove.position = weapon.position; glove.fillColor = .brown; glove.strokeColor = .clear; glove.zPosition = 4; rig.addChild(glove)
-        if staminaLevel >= 3 {
-            let boots = SKSpriteNode(texture: texture("boots-\(staminaLevel >= 6 ? 2 : 1)") { GameArtwork.upgrade(.stamina, level: staminaLevel) })
+        if staminaLevel >= 2 {
+            let boots = SKSpriteNode(texture: texture("boots-\(staminaLevel >= 3 ? 2 : 1)") { GameArtwork.upgrade(.stamina, level: staminaLevel) })
             boots.size = .init(width: w*0.78, height: h*0.2); boots.position.y = -h*0.39; boots.zPosition = 3; rig.addChild(boots)
         }
         addChild(player); playerNode = player
@@ -142,10 +148,10 @@ final class MineScene: SKScene {
         }
         burst(at: point, color: pickaxe.impactColor, count: 10)
     }
-    func discovery(at position: GridPosition) {
+    func discovery(at position: GridPosition, text: String = "+1 gema") {
         let point = center(for: position)
         burst(at: point, color: .systemYellow, count: 16)
-        let label = SKLabelNode(text: "+1 gema"); label.fontName = "AvenirNext-Bold"; label.fontSize = 15; label.fontColor = .systemYellow; label.position = point; label.zPosition = 20; addChild(label)
+        let label = SKLabelNode(text: text); label.fontName = "AvenirNext-Bold"; label.fontSize = 15; label.fontColor = .systemYellow; label.position = point; label.zPosition = 20; addChild(label)
         label.run(.sequence([.group([.moveBy(x: 0, y: 45, duration: 0.8), .fadeOut(withDuration: 0.8)]), .removeFromParent()]))
     }
     private func burst(at point: CGPoint, color: UIColor, count: Int) {

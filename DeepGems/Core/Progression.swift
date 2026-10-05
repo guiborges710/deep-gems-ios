@@ -47,6 +47,11 @@ public struct MineGoal: Identifiable {
 }
 
 public enum Progression {
+    public static func resourceYield(at position: GridPosition) -> (copper: Int, iron: Int) {
+        let region = MineRegion.at(position.row)
+        if position.row % 2 == 0 { return (region == .copperCaves ? 2 : 1, 0) }
+        return (0, region == .crystalDepths ? 2 : 1)
+    }
     public static let maximumDepth = 10_000_000
     public static let secretEntrance = GridPosition(column: 4, row: 18)
     public static let relicPositions: [String: GridPosition] = [
