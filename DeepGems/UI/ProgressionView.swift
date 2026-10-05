@@ -72,9 +72,7 @@ struct CampLandscape: View {
         }.frame(height: 235).clipped().clipShape(RoundedRectangle(cornerRadius: 20))
             .accessibilityLabel("Acampamento estágio \(level): \(level == 1 ? "barraca e oficina simples" : (level == 2 ? "cabana, oficina e depósito" : "base ampliada de dois andares"))")
     }
-    private var triangle: Path {
-        Path { p in p.move(to: CGPoint(x: 0, y: 85)); p.addLine(to: CGPoint(x: 50, y: 0)); p.addLine(to: CGPoint(x: 100, y: 85)); p.closeSubpath() }
-    }
+    private var triangle: CampTriangle { CampTriangle() }
     private func building(name: String, color: Color, floors: Int) -> some View {
         VStack(spacing: 0) {
             Image(systemName: "triangle.fill").resizable().foregroundStyle(Color.deepGold).frame(height: 27)
@@ -246,5 +244,16 @@ private struct MineMapSlice: View {
             }
         }.frame(height: CGFloat(rowCount) * 14)
             .overlay(alignment: .topTrailing) { Text("\(firstRow) m").font(.caption2).foregroundStyle(.white.opacity(0.6)) }
+    }
+}
+
+private struct CampTriangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { p in
+            p.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+            p.addLine(to: CGPoint(x: rect.midX, y: rect.minY))
+            p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+            p.closeSubpath()
+        }
     }
 }

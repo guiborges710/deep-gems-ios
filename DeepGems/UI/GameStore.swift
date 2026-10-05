@@ -60,6 +60,7 @@ final class GameStore: ObservableObject {
                 state.backpackLevel = 2; upgrade(.backpack)
             }
         }
+        if preview { Progression.settle(&state) }
         mineScene.onSelect = { [weak self] position in self?.mine(at: position) }
         syncScene()
     }
