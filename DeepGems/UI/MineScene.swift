@@ -22,6 +22,14 @@ final class MineScene: SKScene {
     private var reportedFrame = false
     override func didMove(to view: SKView) {
         Logger(subsystem: "com.guiborges.deepgems", category: "render").notice("Mine attached: bounds=\(view.bounds.width)x\(view.bounds.height), Metal=\(MTLCreateSystemDefaultDevice() != nil)")
+        // CI visual exercise calls the real swing without altering inventory or mine progress.
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-deepgems-preview") && args.contains("-deepgems-swing-preview") {
+            run(.repeatForever(.sequence([.wait(forDuration: 0.7), .run { [weak self] in
+                guard let self, let player = self.expedition?.player else { return }
+                self.strike(at: .init(column: min(GameEngine.columns - 1, player.column + 1), row: player.row))
+            }])), withKey: "grip-visual-exercise")
+        }
     }
     override func update(_ currentTime: TimeInterval) {
         if !reportedFrame {

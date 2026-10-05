@@ -61,3 +61,5 @@ Assets were created with built-in image generation. Prompts: three equal camp pa
 Shared MinerEquipmentRig coordinates attach each alpha-trimmed tool to the original ExplorerV2 glove at (0.321, 0.615). Grip X is calibrated independently for iron, copper and amethyst; aspect ratio is preserved. The original glove/fingers are composited in front of the shaft in both SwiftUI and SpriteKit, replacing the ellipse. Rest orientation keeps the head outside the torso. SpriteKit swings toward the selected block around that exact attachment and returns to an absolute rest angle, avoiding drift on repeated taps.
 
 Validation: equipment attachment tests cover three models at small mine and large showcase sizes. CI captures full character screens for all models. On device, equip each model, open character/base, mine above/below/left/right and tap repeatedly; confirm the shaft stays behind the glove throughout the swing.
+
+CI also records the real SpriteKit swing through a preview-only exercise flag, without modifying game progress. The video is uploaded separately as deepgems-pickaxe-animation.
