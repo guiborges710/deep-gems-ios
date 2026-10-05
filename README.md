@@ -90,3 +90,14 @@ A compilação iOS e o teste visual precisam de macOS/Xcode. Consulte o status r
 - Progressive gem silhouette and facets, before/after value comparison.
 - Grouped workshop inventory, value sorting, rough-gem selection and atomic batch sale.
 - Upgrade previews, acquisition celebration and equipment artwork tiers at levels 3 and 6. Existing saves stay compatible.
+
+## Prévia no Windows com SwiftUIWeb
+
+Nesta branch, SwiftUIWeb 0.1.0 está integrado aos targets portáteis do Swift Package Manager. Com Swift 6+ instalado, execute na raiz:
+
+```powershell
+swift run DeepGemsWebPreview
+Start-Process .\WebPreview\preview.html
+```
+
+Veja [WINDOWS.md](WINDOWS.md) para instalação do toolchain, script PowerShell e leitura de saves. É uma prévia HTML estática: SwiftUIWeb não executa as telas SwiftUI/SpriteKit nativas ou o gameplay no navegador.

@@ -1,0 +1,50 @@
+name: SwiftUIWeb Windows checks
+on:
+  push:
+    branches: [feature/swiftuiweb-windows]
+  pull_request:
+    paths:
+      - 'Web/**'
+      - 'Package.*'
+      - 'Scripts/preview-windows.ps1'
+      - 'Tests/DeepGemsWebTests/**'
+      - '.github/workflows/windows-web.yml'
+permissions:
+  contents: read
+concurrency:
+  group: windows-web-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: compnerd/gha-setup-swift@bbae8ce86bac5a3449f3992b3d88bc4ca25f2057
+        with:
+          swift-version: swift-6.0.3-release
+          swift-build: 6.0.3-RELEASE
+      - name: Resolve and build Windows targets
+        shell: pwsh
+        run: |
+          swift --version
+          swift package resolve
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          swift build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test portable rules and HTML
+        run: swift test
+      - name: Export DeepGems preview
+        run: swift run DeepGemsWebPreview
+      - name: Verify document and relative assets
+        shell: pwsh
+        run: |
+          $html = Get-Content WebPreview/preview.html -Raw
+          if (!$html.Contains('Retrato estático')) { throw 'Missing static-preview scope' }
+          foreach ($name in @('CampProgressionAtlas', 'ExplorerV2', 'TerrainAtlas', 'GemAtlas', 'MineStructureAtlas')) {
+            if (!(Test-Path "WebPreview/assets/$name.png")) { throw "Missing asset $name" }
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deepgems-windows-preview
+          path: WebPreview/
