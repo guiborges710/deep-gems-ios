@@ -30,6 +30,18 @@ final class GameStore: ObservableObject {
             state.coins = 1250; state.experience = 650; state.backpackLevel = 3
             state.inventory = [Gem(kind: .amethyst), Gem(kind: .quartz), Gem(kind: .diamond, cutQuality: 95)]
             state.hasSeenTutorial = true
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("-deepgems-starter-preview") { state = GameState(); state.hasSeenTutorial = true }
+            if args.contains("-deepgems-camp2-preview") { state.campLevel = 2; state.backpackLevel = 2 }
+            if args.contains("-deepgems-camp3-preview") { state.campLevel = 3; state.backpackLevel = 3; state.relics = Array(Progression.relicPositions.keys).sorted() }
+            if args.contains("-deepgems-depth-preview") {
+                state.pickaxeLevel = 20; state.staminaLevel = 100; state.backpackLevel = 100
+                try? GameEngine.startExpedition(state: &state, seed: 710)
+                for row in 1...32 { try? GameEngine.act(state: &state, at: .init(column: 2, row: row)) }
+                state.iron = 50; state.copper = 50; state.coins = 1000
+                try? GameEngine.build(state: &state, kind: .light)
+                try? GameEngine.build(state: &state, kind: .elevator)
+            }
             if ProcessInfo.processInfo.arguments.contains("-deepgems-mine-preview") { try? GameEngine.startExpedition(state: &state, seed: 710) }
             if ProcessInfo.processInfo.arguments.contains("-deepgems-cut-preview") {
                 try? GameEngine.beginCutting(state: &state, gemID: state.inventory[0].id)
@@ -85,6 +97,19 @@ final class GameStore: ObservableObject {
         do { try saves.save(state); saveError = nil }
         catch { saveError = error.localizedDescription }
     }
+    func build(_ kind: StructureKind) {
+        if change({ try GameEngine.build(state: &$0, kind: kind) }) {
+            miningNotice = "\(kind.name) instalada!"
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        }
+    }
+    func improveCamp() {
+        if change({ try GameEngine.improveCamp(state: &$0) }) {
+            message = "Acampamento evoluiu para o estágio \(state.campLevel)!"
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        }
+    }
+    func travel(to position: GridPosition) { change { try GameEngine.travel(state: &$0, to: position) } }
     func start() { change { try GameEngine.startExpedition(state: &$0) } }
     func mine(at position: GridPosition) {
         let before = state.expedition?.carried.count ?? 0
@@ -140,7 +165,8 @@ final class GameStore: ObservableObject {
         guard let e = state.expedition else { return false }
         let position = GridPosition(column: e.player.column + column, row: e.player.row + row)
         guard let tile = e.tiles.first(where: { $0.position == position }) else { return false }
+        if row < 0 && e.player.row > 0 && !state.hasLadder(at: e.player) { return false }
         return tile.isEmpty || (e.energy > 0 && !(tile.gem != nil && tile.remaining <= state.miningPower && e.carried.count >= state.capacity))
     }
-    private func syncScene() { mineScene.render(expedition: state.expedition, outfit: state.outfit, pickaxe: state.equippedPickaxe, backpackLevel: state.backpackLevel, staminaLevel: state.staminaLevel) }
+    private func syncScene() { mineScene.render(state: state, expedition: state.expedition, outfit: state.outfit, pickaxe: state.equippedPickaxe, backpackLevel: state.backpackLevel, staminaLevel: state.staminaLevel) }
 }

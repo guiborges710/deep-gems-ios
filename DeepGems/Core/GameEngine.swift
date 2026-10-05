@@ -7,14 +7,12 @@ public enum GameEngine {
     public static func startExpedition(state: inout GameState, seed: UInt64 = UInt64.random(in: 1...UInt64.max)) throws {
         guard state.expedition == nil else { return }
         guard state.cutting == nil else { throw GameError.message("Termine a lapidação antes de explorar.") }
-        var expedition = Expedition(seed: seed, player: .init(column: 2, row: 0), energy: state.maximumEnergy,
-                                    carried: [], tiles: [], deepestRow: 0, lastGeneratedRow: -1)
-        generateRows(in: &expedition, through: retainedRows - 1)
-        // A visible, guaranteed first discovery makes the initial expedition understandable.
-        if let index = expedition.tiles.firstIndex(where: { $0.position == GridPosition(column: 2, row: 1) }) {
-            expedition.tiles[index].gem = Gem(kind: .quartz, purity: 85)
-            expedition.tiles[index].hardness = 1; expedition.tiles[index].remaining = 1
+        if state.mineSeed == nil {
+            state.mineSeed = seed
         }
+        var expedition = Expedition(seed: state.mineSeed ?? seed, player: .init(column: 2, row: 0), energy: state.maximumEnergy,
+                                    carried: [], tiles: [], deepestRow: state.deepestRow, lastGeneratedRow: -1)
+        refreshWindow(in: &expedition, state: state)
         state.expedition = expedition
     }
 
@@ -25,6 +23,9 @@ public enum GameEngine {
             throw GameError.message("Esse trecho está fora da área acessível.")
         }
         let tile = expedition.tiles[index]
+        if position.row < expedition.player.row && expedition.player.row > 0 && !state.hasLadder(at: expedition.player) {
+            throw GameError.message("Instale uma escada aqui para subir. O resgate para a base está sempre disponível.")
+        }
         if !tile.isEmpty {
             guard expedition.energy > 0 else { throw GameError.message("Energia esgotada. Volte à base para guardar o saque.") }
             let damage = state.miningPower
@@ -35,6 +36,16 @@ public enum GameEngine {
             expedition.tiles[index].remaining = max(0, tile.remaining - damage)
             if expedition.tiles[index].remaining == 0 {
                 state.experience += 4
+                // Resources do not occupy gem slots; even the early rocks advance construction.
+                if position.row % 2 == 0 { state.copper += 1 } else { state.iron += 1 }
+                if let relic = Progression.relicPositions.first(where: { $0.value == position })?.key,
+                   !state.relics.contains(relic) { state.relics.append(relic) }
+                if position == Progression.secretEntrance {
+                    let room = GridPosition(column: 5, row: 18)
+                    let chamber = MineTile(position: room, hardness: 1, remaining: 1, gem: Gem(kind: .amethyst, carats: 3, purity: 100))
+                    if let i = expedition.tiles.firstIndex(where: { $0.position == room }) { expedition.tiles[i] = chamber }
+                    remember(chamber, state: &state)
+                }
                 if let gem = tile.gem {
                     expedition.carried.append(gem)
                     var entry = state.collection[gem.kind.rawValue] ?? CollectionEntry()
@@ -45,22 +56,24 @@ public enum GameEngine {
                 expedition.tiles[index].gem = nil
             }
         }
+        remember(expedition.tiles[index], state: &state)
         if expedition.tiles[index].isEmpty {
             expedition.player = position
             expedition.deepestRow = max(expedition.deepestRow, position.row)
             state.deepestRow = max(state.deepestRow, position.row)
-            generateRows(in: &expedition, through: position.row + retainedRows - 1)
-            // Retain a few rows above the player; this bounds save size even in long sessions.
-            let minimumRow = max(0, position.row - 3)
-            expedition.tiles.removeAll { $0.position.row < minimumRow }
+            refreshWindow(in: &expedition, state: state)
         }
+        Progression.settle(&state)
         state.expedition = expedition
     }
 
     public static func returnToBase(state: inout GameState) {
         guard let expedition = state.expedition else { return }
         state.inventory.append(contentsOf: expedition.carried)
+        state.mineSeed = expedition.seed
+        for tile in expedition.tiles where tile.remaining != tile.hardness { remember(tile, state: &state) }
         state.expedition = nil
+        Progression.settle(&state)
     }
 
     public static func upgrade(state: inout GameState, kind: Upgrade) throws {
@@ -70,6 +83,7 @@ public enum GameEngine {
         guard state.upgradeLevel(kind) < 1000 else { throw GameError.message("Limite de equipamento desta versão atingido.") }
         state.coins -= cost
         switch kind { case .pickaxe: state.pickaxeLevel += 1; case .backpack: state.backpackLevel += 1; case .stamina: state.staminaLevel += 1 }
+        Progression.settle(&state)
     }
 
     public static func buyPickaxe(state: inout GameState, kind: PickaxeKind) throws {
@@ -162,24 +176,70 @@ public enum GameEngine {
         return value ^ (value >> 31)
     }
 
-    private static func generateRows(in expedition: inout Expedition, through row: Int) {
-        guard row > expedition.lastGeneratedRow else { return }
-        for depth in (expedition.lastGeneratedRow + 1)...row {
+    private static func remember(_ tile: MineTile, state: inout GameState) {
+        if let i = state.mineChanges.firstIndex(where: { $0.position == tile.position }) { state.mineChanges[i] = tile }
+        else { state.mineChanges.append(tile) }
+    }
+
+    private static func generatedTile(seed: UInt64, depth: Int, column: Int) -> MineTile {
+        let roll = noise(seed: seed, row: depth, column: column)
+        let hardness = depth == 0 ? 0 : min(12, 1 + depth / 10 + Int(roll % 3))
+        var gem: Gem?
+        if depth > 0 && roll % 100 < 30 {
+            let available = GemKind.allCases.filter { $0.minimumDepth <= depth }
+            let r = Int((roll >> 8) % 100)
+            let candidate = r < 55 ? 0 : (r < 80 ? 1 : (r < 93 ? 2 : (r < 98 ? 3 : 4)))
+            gem = Gem(kind: available[min(candidate, available.count - 1)], carats: 1 + Int((roll >> 16) % 3), purity: 50 + Int((roll >> 24) % 51))
+        }
+        if depth == 1 && column == 2 { return MineTile(position: .init(column: column, row: depth), hardness: 1, remaining: 1, gem: Gem(kind: .quartz, purity: 85)) }
+        return MineTile(position: .init(column: column, row: depth), hardness: hardness, remaining: hardness, gem: gem)
+    }
+
+    private static func refreshWindow(in e: inout Expedition, state: GameState) {
+        let first = max(0, e.player.row - 3)
+        let last = min(Progression.maximumDepth, e.player.row + retainedRows - 1)
+        let existing = Dictionary(uniqueKeysWithValues: e.tiles.map { ($0.position, $0) })
+        let changes = Dictionary(uniqueKeysWithValues: state.mineChanges.map { ($0.position, $0) })
+        var tiles: [MineTile] = []
+        for row in first...last {
             for column in 0..<columns {
-                let roll = noise(seed: expedition.seed, row: depth, column: column)
-                let hardness = depth == 0 ? 0 : min(12, 1 + depth / 10 + Int(roll % 3))
-                var gem: Gem?
-                if depth > 0 && roll % 100 < 30 {
-                    let available = GemKind.allCases.filter { $0.minimumDepth <= depth }
-                    // Higher rarity needs both sufficient depth and a high secondary roll.
-                    let rarityRoll = Int((roll >> 8) % 100)
-                    let candidate = rarityRoll < 55 ? 0 : (rarityRoll < 80 ? 1 : (rarityRoll < 93 ? 2 : (rarityRoll < 98 ? 3 : 4)))
-                    let kind = available[min(candidate, available.count - 1)]
-                    gem = Gem(kind: kind, carats: 1 + Int((roll >> 16) % 3), purity: 50 + Int((roll >> 24) % 51))
-                }
-                expedition.tiles.append(MineTile(position: .init(column: column, row: depth), hardness: hardness, remaining: hardness, gem: gem))
+                let position = GridPosition(column: column, row: row)
+                tiles.append(changes[position] ?? existing[position] ?? generatedTile(seed: e.seed, depth: row, column: column))
             }
         }
-        expedition.lastGeneratedRow = row
+        e.tiles = tiles; e.lastGeneratedRow = last
+    }
+
+    public static func build(state: inout GameState, kind: StructureKind) throws {
+        guard let e = state.expedition, e.player.row > 0 else { throw GameError.message("Instale estruturas dentro de um túnel escavado.") }
+        let structure = MineStructure(kind: kind, position: e.player)
+        guard !state.structures.contains(where: { $0.id == structure.id }) else { throw GameError.message("Essa estrutura já existe aqui.") }
+        try pay(kind.cost, state: &state)
+        state.structures.append(structure)
+        Progression.settle(&state)
+    }
+
+    public static func improveCamp(state: inout GameState) throws {
+        guard state.expedition == nil, state.campLevel < 3 else { throw GameError.message("Volte à base. O acampamento tem três estágios.") }
+        try pay(Progression.campCost(state.campLevel), state: &state)
+        state.campLevel += 1
+        Progression.settle(&state)
+    }
+
+    private static func pay(_ cost: BuildCost, state: inout GameState) throws {
+        guard cost.isAffordable(state) else { throw GameError.message("Requisitos: " + cost.description) }
+        state.coins -= cost.coins; state.copper -= cost.copper; state.iron -= cost.iron
+    }
+
+    public static func travel(state: inout GameState, to destination: GridPosition) throws {
+        guard var e = state.expedition else { throw GameError.message("Entre na mina antes de usar o elevador.") }
+        let atSurface = e.player.row == 0
+        let atStation = state.elevatorStops.contains { $0.position == e.player }
+        let destinationValid = destination == GridPosition(column: 2, row: 0) || state.elevatorStops.contains { $0.position == destination }
+        guard !state.elevatorStops.isEmpty, atSurface || atStation, destinationValid else { throw GameError.message("Use o elevador na superfície ou em uma estação construída.") }
+        e.player = destination
+        refreshWindow(in: &e, state: state)
+        guard e.tiles.contains(where: { $0.position == destination && $0.isEmpty }) else { throw GameError.message("A estação não está acessível.") }
+        state.expedition = e
     }
 }

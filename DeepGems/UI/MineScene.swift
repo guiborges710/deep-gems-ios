@@ -6,6 +6,7 @@ import OSLog
 @MainActor
 final class MineScene: SKScene {
     var onSelect: ((GridPosition) -> Void)?
+    private var state = GameState()
     private var expedition: Expedition?
     private var outfit: Outfit = .teal
     private var pickaxe: PickaxeKind = .iron
@@ -34,7 +35,8 @@ final class MineScene: SKScene {
     }
     required init?(coder: NSCoder) { fatalError("Use init(size:)") }
     override func didChangeSize(_ oldSize: CGSize) { redraw(previous: nil) }
-    func render(expedition: Expedition?, outfit: Outfit, pickaxe: PickaxeKind, backpackLevel: Int = 1, staminaLevel: Int = 1) {
+    func render(state: GameState, expedition: Expedition?, outfit: Outfit, pickaxe: PickaxeKind, backpackLevel: Int = 1, staminaLevel: Int = 1) {
+        self.state = state
         let previous = self.expedition?.player
         self.expedition = expedition; self.outfit = outfit; self.pickaxe = pickaxe
         self.backpackLevel = backpackLevel; self.staminaLevel = staminaLevel
@@ -56,12 +58,30 @@ final class MineScene: SKScene {
             let terrainIndex = tile.isEmpty ? 2 : tile.hardness % 3
             let rock = SKSpriteNode(texture: texture("terrain-\(terrainIndex)") { GameArtwork.terrain(terrainIndex) })
             rock.size = .init(width: tileSize + 1, height: tileSize + 1); rock.position = point
-            if tile.isEmpty { rock.color = .black; rock.colorBlendFactor = 0.75 }
+            let region = MineRegion.at(tile.position.row)
+            rock.color = region == .earth ? .brown : (region == .copperCaves ? .systemOrange : .systemPurple)
+            rock.colorBlendFactor = tile.isEmpty ? 0.85 : 0.30
+            if tile.isEmpty { rock.color = rock.color.withAlphaComponent(1); rock.alpha = 0.45 }
+            if !state.isLit(tile.position) { rock.alpha *= 0.45 }
             addChild(rock)
-            if tile.isEmpty && tile.position.column == 0 && tile.position.row % 3 == 0 {
+            if tile.isEmpty && state.hasLadder(at: tile.position) {
                 let ladder = SKSpriteNode(texture: texture("ladder") { GameArtwork.terrain(3) })
                 ladder.size = .init(width: tileSize * 0.85, height: tileSize * 1.2); ladder.position = point; ladder.zPosition = 1
                 addChild(ladder)
+            }
+            for structure in state.structures where structure.position == tile.position && structure.kind != .ladder {
+                let marker = SKShapeNode(rectOf: .init(width: tileSize * 0.65, height: tileSize * 0.8), cornerRadius: 5)
+                marker.position = point; marker.zPosition = 3
+                marker.fillColor = structure.kind == .light ? .systemYellow.withAlphaComponent(0.18) : .darkGray
+                marker.strokeColor = structure.kind == .light ? .systemYellow : .systemTeal
+                marker.lineWidth = 3; marker.glowWidth = structure.kind == .light ? 12 : 0; addChild(marker)
+                let label = SKLabelNode(text: structure.kind == .light ? "✦" : "↕")
+                label.fontSize = tileSize * 0.5; label.fontColor = marker.strokeColor; label.position = point
+                label.verticalAlignmentMode = .center; label.zPosition = 4; addChild(label)
+            }
+            if !tile.isEmpty && (tile.position == Progression.secretEntrance || Progression.relicPositions.values.contains(tile.position)) {
+                let clue = SKLabelNode(text: tile.position == Progression.secretEntrance ? "✧" : "?")
+                clue.position = point; clue.fontColor = .systemYellow; clue.fontSize = 22; clue.zPosition = 3; addChild(clue)
             }
             if adjacent {
                 let highlight = SKShapeNode(rectOf: .init(width: tileSize-3, height: tileSize-3), cornerRadius: 8)
@@ -84,21 +104,23 @@ final class MineScene: SKScene {
         }
         let player = SKNode(); player.position = center(for: e.player); player.zPosition = 5
         let halo = SKShapeNode(circleOfRadius: tileSize * 0.85)
-        halo.fillColor = UIColor.systemYellow.withAlphaComponent(0.08); halo.strokeColor = .clear; halo.glowWidth = 10; player.addChild(halo)
+        halo.fillColor = UIColor.systemYellow.withAlphaComponent(state.characterTier >= 2 ? 0.14 : 0.03); halo.strokeColor = .clear; halo.glowWidth = 10; player.addChild(halo)
         let shadow = SKShapeNode(ellipseOf: .init(width: tileSize*0.8, height: tileSize*0.18)); shadow.fillColor = .black.withAlphaComponent(0.5); shadow.strokeColor = .clear; shadow.position.y = -tileSize*0.38; player.addChild(shadow)
         let rig = SKNode(); player.addChild(rig)
-        let image = GameArtwork.explorer(outfit)
+        let image = GameArtwork.explorer(outfit, tier: state.characterTier)
         let h = tileSize * 1.35, w = h * image.size.width / max(1, image.size.height)
         if backpackLevel >= 1 {
-            let pack = SKSpriteNode(texture: texture("pack-\(backpackLevel >= 6 ? 2 : (backpackLevel >= 3 ? 1 : 0))") { GameArtwork.upgrade(.backpack, level: backpackLevel) })
+            let pack = SKSpriteNode(texture: texture("pack-\(backpackLevel >= 3 ? 2 : (backpackLevel >= 2 ? 1 : 0))") { GameArtwork.upgrade(.backpack, level: backpackLevel) })
             pack.size = .init(width: w*0.48, height: h*0.34); pack.position = .init(x: -w*0.27, y: h*0.03); rig.addChild(pack)
         }
         let weapon = SKSpriteNode(texture: texture("weapon-\(pickaxe.rawValue)") { GameArtwork.pickaxe(pickaxe) })
-        weapon.size = .init(width: h*0.42, height: h*0.42); weapon.anchorPoint = .init(x: 0.3, y: 0.3)
-        weapon.position = .init(x: -w*0.20, y: -h*0.12); weapon.zRotation = CGFloat.pi * 55 / 180; weapon.zPosition = 1
+        weapon.size = .init(width: h*0.42, height: h*0.42); weapon.anchorPoint = .init(x: 0.26, y: 0.25)
+        weapon.position = .init(x: -w*0.19, y: -h*0.14); weapon.zRotation = CGFloat.pi * 18 / 180; weapon.zPosition = 3
         rig.addChild(weapon); weaponNode = weapon
         let body = SKSpriteNode(texture: texture("explorer-\(outfit.rawValue)") { image })
         body.size = .init(width: w, height: h); body.zPosition = 2; rig.addChild(body)
+        let glove = SKShapeNode(ellipseOf: .init(width: w * 0.075, height: h * 0.023))
+        glove.position = weapon.position; glove.fillColor = .brown; glove.strokeColor = .clear; glove.zPosition = 4; rig.addChild(glove)
         if staminaLevel >= 3 {
             let boots = SKSpriteNode(texture: texture("boots-\(staminaLevel >= 6 ? 2 : 1)") { GameArtwork.upgrade(.stamina, level: staminaLevel) })
             boots.size = .init(width: w*0.78, height: h*0.2); boots.position.y = -h*0.39; boots.zPosition = 3; rig.addChild(boots)

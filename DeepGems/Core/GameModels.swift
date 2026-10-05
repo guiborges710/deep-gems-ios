@@ -135,6 +135,14 @@ public struct CuttingSession: Codable, Equatable {
 }
 
 public struct GameState: Codable, Equatable {
+    public var mineSeed: UInt64?
+    public var mineChanges: [MineTile] = []
+    public var structures: [MineStructure] = []
+    public var copper = 0
+    public var iron = 0
+    public var campLevel = 1
+    public var relics: [String] = []
+    public var completedGoals: [String] = []
     public var schemaVersion = 1
     public var coins = 0
     public var experience = 0
@@ -155,7 +163,7 @@ public struct GameState: Codable, Equatable {
     private enum CodingKeys: String, CodingKey {
         case schemaVersion, coins, experience, pickaxeLevel, backpackLevel, staminaLevel,
              deepestRow, inventory, collection, outfit, expedition, cutting, hasSeenTutorial,
-             ownedPickaxes, equippedPickaxe
+             ownedPickaxes, equippedPickaxe, mineSeed, mineChanges, structures, copper, iron, campLevel, relics, completedGoals
     }
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -172,9 +180,21 @@ public struct GameState: Codable, Equatable {
         expedition = try values.decodeIfPresent(Expedition.self, forKey: .expedition)
         cutting = try values.decodeIfPresent(CuttingSession.self, forKey: .cutting)
         hasSeenTutorial = try values.decode(Bool.self, forKey: .hasSeenTutorial)
+        mineSeed = try values.decodeIfPresent(UInt64.self, forKey: .mineSeed)
+        mineChanges = try values.decodeIfPresent([MineTile].self, forKey: .mineChanges) ?? []
+        structures = try values.decodeIfPresent([MineStructure].self, forKey: .structures) ?? []
+        copper = try values.decodeIfPresent(Int.self, forKey: .copper) ?? 0
+        iron = try values.decodeIfPresent(Int.self, forKey: .iron) ?? 0
+        campLevel = try values.decodeIfPresent(Int.self, forKey: .campLevel) ?? 1
+        relics = try values.decodeIfPresent([String].self, forKey: .relics) ?? []
+        completedGoals = try values.decodeIfPresent([String].self, forKey: .completedGoals) ?? []
         // Existing Swift MVP saves keep all progress; new equipment fields default to iron.
         ownedPickaxes = try values.decodeIfPresent([PickaxeKind].self, forKey: .ownedPickaxes) ?? [.iron]
         equippedPickaxe = try values.decodeIfPresent(PickaxeKind.self, forKey: .equippedPickaxe) ?? .iron
+        if !values.contains(.mineChanges), let active = expedition {
+            mineSeed = active.seed
+            mineChanges = active.tiles.filter { $0.remaining != $0.hardness }
+        }
     }
     // Increasing thresholds without a fixed maximum player level.
     public var level: Int { Int((sqrt(1 + Double(experience) / 10) - 1) / 2) }

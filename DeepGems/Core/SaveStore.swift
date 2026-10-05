@@ -64,6 +64,23 @@ public final class SaveStore {
               Set(state.ownedPickaxes).count == state.ownedPickaxes.count else {
             throw GameError.message("Equipamentos inválidos no arquivo de progresso.")
         }
+        let validTile: (MineTile) -> Bool = {
+            (0..<GameEngine.columns).contains($0.position.column) && (0...Progression.maximumDepth).contains($0.position.row)
+            && (0...12).contains($0.hardness) && (0...$0.hardness).contains($0.remaining)
+            && (!$0.isEmpty || $0.gem == nil)
+        }
+        guard (0...1_000_000_000).contains(state.copper), (0...1_000_000_000).contains(state.iron),
+              (1...3).contains(state.campLevel), state.mineChanges.allSatisfy(validTile),
+              Set(state.mineChanges.map(\.position)).count == state.mineChanges.count,
+              Set(state.structures.map(\.id)).count == state.structures.count,
+              state.structures.allSatisfy({ structure in
+                  state.mineChanges.contains { $0.position == structure.position && $0.isEmpty }
+              }), Set(state.relics).count == state.relics.count,
+              state.relics.allSatisfy({ Progression.relicPositions[$0] != nil }),
+              Set(state.completedGoals).count == state.completedGoals.count,
+              state.completedGoals.allSatisfy({ id in Progression.goals(state).contains { $0.id == id } }) else {
+            throw GameError.message("Mina ou construções inválidas no arquivo de progresso.")
+        }
         var allGems = state.inventory
         if let expedition = state.expedition {
             guard state.cutting == nil, (0...state.maximumEnergy).contains(expedition.energy),
