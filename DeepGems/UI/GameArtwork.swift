@@ -17,6 +17,13 @@ enum GameArtwork {
         guard let cg = source.cgImage, let crop = cg.cropping(to: CGRect(x: CGFloat(cg.width) * 0.24, y: CGFloat(cg.height) * 0.02, width: CGFloat(cg.width) * 0.6, height: CGFloat(cg.height) * 0.3)) else { return source }
         let image = UIImage(cgImage: crop); cache[key] = image; return image
     }
+    static func camp(_ level: Int) -> UIImage {
+        region(name: "CampProgressionAtlas", index: min(2, max(0, level - 1)), count: 3)
+    }
+    static func structure(_ kind: StructureKind) -> UIImage {
+        let index = kind == .ladder ? 0 : (kind == .light ? 1 : 2)
+        return region(name: "MineStructureAtlas", index: index, count: 3)
+    }
     static func terrain(_ index: Int) -> UIImage { region(name: "TerrainAtlas", index: index, count: 4) }
     static func upgrade(_ kind: Upgrade, level: Int, pickaxe: PickaxeKind = .iron) -> UIImage {
         if kind == .pickaxe { return self.pickaxe(pickaxe) }

@@ -20,73 +20,30 @@ struct ObjectiveCard: View {
     }
 }
 
-/// Native vector buildings let each upgrade change the actual scene, without replacing the existing art assets.
+/// Illustrated progression textures share the original cave, wood and amber-light art direction.
 struct CampLandscape: View {
     let level: Int
     var relics: [String] = []
     var body: some View {
-        GeometryReader { g in
-            ZStack {
-                LinearGradient(colors: [Color(red: 0.06, green: 0.20, blue: 0.25), .deepBackground], startPoint: .top, endPoint: .bottom)
-                Circle().fill(Color.deepGold.opacity(0.20)).frame(width: 95, height: 95).blur(radius: 12).offset(x: g.size.width * 0.3, y: -65)
-                Path { path in
-                    path.move(to: CGPoint(x: 0, y: g.size.height * 0.65))
-                    path.addLine(to: CGPoint(x: g.size.width * 0.2, y: 35))
-                    path.addLine(to: CGPoint(x: g.size.width * 0.43, y: g.size.height * 0.7))
-                    path.addLine(to: CGPoint(x: g.size.width * 0.7, y: 10))
-                    path.addLine(to: CGPoint(x: g.size.width, y: g.size.height * 0.6))
-                    path.addLine(to: CGPoint(x: g.size.width, y: g.size.height))
-                    path.addLine(to: CGPoint(x: 0, y: g.size.height)); path.closeSubpath()
-                }.fill(Color(red: 0.08, green: 0.28, blue: 0.24))
-                Ellipse().fill(Color(red: 0.23, green: 0.17, blue: 0.10)).frame(width: g.size.width * 1.4, height: 130).offset(y: g.size.height * 0.40)
-                HStack(alignment: .bottom, spacing: 12) {
-                    if level == 1 {
-                        ZStack(alignment: .bottom) {
-                            triangle.fill(LinearGradient(colors: [.deepGold, .brown], startPoint: .topLeading, endPoint: .bottomTrailing))
-                            triangle.fill(Color.deepBackground).frame(width: 32, height: 45)
-                        }.frame(width: 100, height: 85)
-                    } else { building(name: level == 2 ? "CABANA" : "BASE", color: .brown, floors: level == 3 ? 2 : 1) }
-                    building(name: "OFICINA", color: level == 1 ? .brown.opacity(0.55) : .deepTeal, floors: 1)
-                    if level >= 2 { building(name: "DEPÓSITO", color: .brown, floors: level == 3 ? 2 : 1) }
-                }.padding(.horizontal, 12).offset(y: 20)
-                HStack {
-                    Image(systemName: "shippingbox.fill").font(.system(size: level == 1 ? 22 : 34)).foregroundStyle(Color.deepGold)
-                    Spacer()
-                    if level == 3 {
-                        Image(systemName: "antenna.radiowaves.left.and.right").font(.system(size: 40)).foregroundStyle(Color.deepTeal)
-                    }
-                    Image(systemName: "flame.fill").font(.system(size: 24)).foregroundStyle(.orange)
-                }.padding(30).offset(y: 95)
+        GeometryReader { geometry in
+            ZStack(alignment: .bottomTrailing) {
+                Image(uiImage: GameArtwork.camp(level))
+                    .resizable().scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height).clipped()
                 if !relics.isEmpty {
-                    HStack(spacing: 6) {
-                        ForEach(relics, id: \.self) { relic in RelicArt(relic: relic).frame(width: 25, height: 40) }
-                    }.padding(8).background(Color.deepPanel.opacity(0.9), in: RoundedRectangle(cornerRadius: 8))
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.deepGold)).offset(x: 65, y: 92)
-                }
-                if level >= 2 {
-                    HStack(spacing: 35) {
-                        ForEach(0..<3) { _ in Circle().fill(Color.deepGold).frame(width: 7, height: 7).shadow(color: .yellow, radius: 9) }
-                    }.offset(y: -35)
+                    HStack(spacing: 8) {
+                        ForEach(relics, id: \.self) { relic in
+                            RelicArt(relic: relic).frame(width: 26, height: 38)
+                        }
+                    }.padding(10)
+                        .background(Color.deepBackground.opacity(0.75), in: RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.deepGold.opacity(0.55)))
+                        .padding(12)
                 }
             }
-        }.frame(height: 235).clipped().clipShape(RoundedRectangle(cornerRadius: 20))
+        }.frame(height: 340).clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.deepGold.opacity(0.3)))
             .accessibilityLabel("Acampamento estágio \(level): \(level == 1 ? "barraca e oficina simples" : (level == 2 ? "cabana, oficina e depósito" : "base ampliada de dois andares"))")
-    }
-    private var triangle: CampTriangle { CampTriangle() }
-    private func building(name: String, color: Color, floors: Int) -> some View {
-        VStack(spacing: 0) {
-            Image(systemName: "triangle.fill").resizable().foregroundStyle(Color.deepGold).frame(height: 27)
-            VStack(spacing: 7) {
-                ForEach(0..<floors, id: \.self) { _ in
-                    HStack(spacing: 13) {
-                        RoundedRectangle(cornerRadius: 2).fill(Color.deepGold).frame(width: 13, height: 17)
-                        RoundedRectangle(cornerRadius: 2).fill(Color.deepGold).frame(width: 13, height: 17)
-                    }
-                }
-                Text(name).font(.system(size: 8, weight: .black)).foregroundStyle(.white)
-            }.padding(9).frame(maxWidth: .infinity).background(color.gradient)
-                .overlay(Rectangle().stroke(Color.deepGold.opacity(0.4)))
-        }.frame(maxWidth: .infinity)
     }
 }
 
@@ -108,7 +65,7 @@ struct CampView: View {
                 CampLandscape(level: game.state.campLevel, relics: game.state.relics)
                     .overlay(alignment: .bottomLeading) {
                         ExplorerShowcase(outfit: game.state.outfit, pickaxe: game.state.equippedPickaxe, backpackLevel: game.state.backpackLevel, staminaLevel: game.state.staminaLevel)
-                            .frame(width: 100, height: 155).padding(.leading, 16).padding(.bottom, 3)
+                            .frame(width: 135, height: 210).padding(.leading, 24).padding(.bottom, 38)
                     }
                 HStack {
                     Text("Cobre \(game.state.copper) • Ferro \(game.state.iron)")
@@ -244,16 +201,5 @@ private struct MineMapSlice: View {
             }
         }.frame(height: CGFloat(rowCount) * 14)
             .overlay(alignment: .topTrailing) { Text("\(firstRow) m").font(.caption2).foregroundStyle(.white.opacity(0.6)) }
-    }
-}
-
-private struct CampTriangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        Path { p in
-            p.move(to: CGPoint(x: rect.minX, y: rect.maxY))
-            p.addLine(to: CGPoint(x: rect.midX, y: rect.minY))
-            p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-            p.closeSubpath()
-        }
     }
 }

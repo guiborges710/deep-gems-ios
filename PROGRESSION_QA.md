@@ -49,3 +49,9 @@ O workflow iOS executa `swift test`, compila sem assinatura e publica as captura
 - Trilhos, carrinhos, perfuradoras e monetização continuam fora do escopo.
 - Estágios do acampamento usam ilustrações vetoriais nativas; personagem e equipamentos reaproveitam os atlas existentes.
 - Custos iniciais foram reduzidos a marcos acessíveis, mas a meta de evolução em dez minutos ainda precisa de uma sessão cronometrada com jogadores.
+
+## Visual art correction
+
+The camp now uses CampProgressionAtlas: three illustrated scenes created from the supplied reference and BaseV2, with matching navy stone, timber textures and amber lanterns. MineStructureAtlas supplies transparent ladder, lantern and elevator sprites in the same style. Camp scene height and player size increased, and mine region tints reduced to retain painted rock detail. The previous vector camp geometry and symbolic structure boxes were removed. No game rules or save format changed.
+
+Assets were created with built-in image generation. Prompts: three equal camp panels (tent, cabin/workshop/storage, two-storey mining headquarters), same camera and empty foreground for player; three isolated transparent structure panels (wood ladder, amber hanging lantern, timber/iron elevator). Both use the original reference as mandatory style guidance.

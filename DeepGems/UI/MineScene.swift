@@ -60,24 +60,25 @@ final class MineScene: SKScene {
             rock.size = .init(width: tileSize + 1, height: tileSize + 1); rock.position = point
             let region = MineRegion.at(tile.position.row)
             rock.color = region == .earth ? .brown : (region == .copperCaves ? .systemOrange : .systemPurple)
-            rock.colorBlendFactor = tile.isEmpty ? 0.85 : 0.30
+            rock.colorBlendFactor = tile.isEmpty ? 0.65 : 0.12
             if tile.isEmpty { rock.color = rock.color.withAlphaComponent(1); rock.alpha = 0.45 }
-            if !state.isLit(tile.position) { rock.alpha *= 0.45 }
+            if !state.isLit(tile.position) { rock.alpha *= 0.65 }
             addChild(rock)
-            if tile.isEmpty && state.hasLadder(at: tile.position) {
-                let ladder = SKSpriteNode(texture: texture("ladder") { GameArtwork.terrain(3) })
-                ladder.size = .init(width: tileSize * 0.85, height: tileSize * 1.2); ladder.position = point; ladder.zPosition = 1
-                addChild(ladder)
-            }
-            for structure in state.structures where structure.position == tile.position && structure.kind != .ladder {
-                let marker = SKShapeNode(rectOf: .init(width: tileSize * 0.65, height: tileSize * 0.8), cornerRadius: 5)
-                marker.position = point; marker.zPosition = 3
-                marker.fillColor = structure.kind == .light ? .systemYellow.withAlphaComponent(0.18) : .darkGray
-                marker.strokeColor = structure.kind == .light ? .systemYellow : .systemTeal
-                marker.lineWidth = 3; marker.glowWidth = structure.kind == .light ? 12 : 0; addChild(marker)
-                let label = SKLabelNode(text: structure.kind == .light ? "✦" : "↕")
-                label.fontSize = tileSize * 0.5; label.fontColor = marker.strokeColor; label.position = point
-                label.verticalAlignmentMode = .center; label.zPosition = 4; addChild(label)
+            for structure in state.structures where structure.position == tile.position {
+                let art = GameArtwork.structure(structure.kind)
+                let sprite = SKSpriteNode(texture: texture("structure-\(structure.kind.rawValue)") { art })
+                let height = tileSize * (structure.kind == .light ? 0.75 : 1.05)
+                sprite.size = .init(width: min(tileSize * 0.95, height * art.size.width / max(1, art.size.height)), height: height)
+                sprite.position = point; sprite.zPosition = structure.kind == .ladder ? 1 : 3
+                if structure.kind == .light {
+                    sprite.position.x += tileSize * 0.27
+                    sprite.position.y += tileSize * 0.12
+                    let glow = SKShapeNode(circleOfRadius: tileSize * 0.65)
+                    glow.position = sprite.position; glow.fillColor = UIColor.systemOrange.withAlphaComponent(0.12)
+                    glow.strokeColor = .clear; glow.glowWidth = 12; glow.zPosition = 2; addChild(glow)
+                    glow.run(.repeatForever(.sequence([.fadeAlpha(to: 0.65, duration: 0.7), .fadeAlpha(to: 1, duration: 0.9)])))
+                }
+                addChild(sprite)
             }
             if !tile.isEmpty && (tile.position == Progression.secretEntrance || Progression.relicPositions.values.contains(tile.position)) {
                 let clue = SKLabelNode(text: tile.position == Progression.secretEntrance ? "✧" : "?")
