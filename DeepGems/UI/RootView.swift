@@ -2,7 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject private var game: GameStore
-    @State private var tab = ProcessInfo.processInfo.arguments.contains("-deepgems-shop-preview") ? 4 : (ProcessInfo.processInfo.arguments.contains("-deepgems-mine-preview") ? 1 : (ProcessInfo.processInfo.arguments.contains("-deepgems-workshop-preview") ? 2 : 0))
+    @State private var tab = ProcessInfo.processInfo.arguments.contains("-deepgems-shop-preview") ? 4 : (ProcessInfo.processInfo.arguments.contains("-deepgems-mine-preview") || ProcessInfo.processInfo.arguments.contains("-deepgems-depth-preview") ? 1 : (ProcessInfo.processInfo.arguments.contains("-deepgems-workshop-preview") ? 2 : 0))
     @State private var resetConfirmation = false
     var body: some View {
         Group {
@@ -16,7 +16,7 @@ struct RootView: View {
                 }.padding(24)
             } else {
                 TabView(selection: $tab) {
-                    NavigationStack { if ProcessInfo.processInfo.arguments.contains("-deepgems-character-preview") { CharacterView() } else { BaseView(onExplore: { game.start(); if game.state.expedition != nil { tab = 1 } }, onShop: { tab = 4 }) } }
+                    NavigationStack { if ProcessInfo.processInfo.arguments.contains("-deepgems-character-preview") { CharacterView() } else { CampView(explore: { game.start(); if game.state.expedition != nil { tab = 1 } }, shop: { tab = 4 }) } }
                         .tabItem { Label("Base", systemImage: "house.fill") }.tag(0)
                     NavigationStack { MineView() }
                         .tabItem { Label("Mina", systemImage: "mountain.2.fill") }.tag(1)
@@ -25,7 +25,7 @@ struct RootView: View {
                     NavigationStack { CollectionView() }
                         .tabItem { Label("Coleção", systemImage: "diamond.fill") }.tag(3)
                     NavigationStack { EquipmentView() }
-                        .tabItem { Label("Loja", systemImage: "bag.fill") }.tag(4)
+                        .tabItem { Label("Equipamentos", systemImage: "bag.fill") }.tag(4)
                 }
                 .toolbarBackground(Color.deepBackground, for: .tabBar)
                 .toolbarBackground(.visible, for: .tabBar)

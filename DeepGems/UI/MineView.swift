@@ -4,6 +4,8 @@ import SpriteKit
 struct MineView: View {
     @EnvironmentObject private var game: GameStore
     @State private var showReturn = false
+    @State private var showBuild = false
+    @State private var showMap = false
     @Environment(\.scenePhase) private var scenePhase
     var body: some View {
         GeometryReader { geometry in
@@ -12,25 +14,32 @@ struct MineView: View {
                     HStack {
                         Text("Profundidade \(e.player.row) m").font(.system(.title2, design: .serif, weight: .bold))
                         Spacer()
-                        Text("Recorde \(game.state.deepestRow) m").font(.caption2).foregroundStyle(.secondary)
+                        Text("Recorde \(game.state.deepestRow) m • \(game.state.coins) ●").font(.caption2).foregroundStyle(.secondary)
                     }
+                    Text(MineRegion.at(e.player.row).name).font(.caption).foregroundStyle(Color.deepGold)
+                    ObjectiveCard(state: game.state, compact: true)
                     HStack(spacing: 10) {
                         meter(value: e.energy, maximum: game.state.maximumEnergy, symbol: "bolt.fill", tint: .deepTeal)
                         meter(value: e.carried.count, maximum: game.state.capacity, symbol: "backpack.fill", tint: .deepGold)
                     }
                     SpriteView(scene: game.mineScene, isPaused: false, preferredFramesPerSecond: 60)
-                        .frame(maxWidth: .infinity).frame(height: max(80, geometry.size.height - (geometry.size.height < 650 ? 308 : 320)))
+                        .frame(maxWidth: .infinity).frame(height: max(80, geometry.size.height - 350))
                         .clipShape(RoundedRectangle(cornerRadius: 18))
                         .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.deepGold.opacity(0.3)))
                         .accessibilityLabel("Mina. Toque nos blocos dourados ao lado do explorador ou use as setas.")
-                    HStack(spacing: 8) {
-                        ForEach(GemKind.allCases) { kind in
-                            VStack(spacing: 2) {
-                                GemArt(kind: kind).frame(height: geometry.size.height < 650 ? 24 : 36)
-                                Text("\(e.carried.filter { $0.kind == kind }.count)").font(.caption.bold()).monospacedDigit()
-                            }.frame(maxWidth: .infinity).padding(5).background(Color.deepPanel, in: RoundedRectangle(cornerRadius: 9))
+                    HStack(spacing: 10) {
+                        Button { showBuild = true } label: { Label("Construir", systemImage: "hammer.fill") }
+                        Spacer()
+                        Button { showMap = true } label: { Label("Mapa", systemImage: "map.fill") }
+                        if !game.state.elevatorStops.isEmpty {
+                            Menu {
+                                Button("Superfície") { game.travel(to: .init(column: 2, row: 0)) }
+                                ForEach(game.state.elevatorStops) { stop in
+                                    Button("Estação \(stop.position.row) m") { game.travel(to: stop.position) }
+                                }
+                            } label: { Image(systemName: "arrow.up.arrow.down.square.fill") }
                         }
-                    }.accessibilityLabel("Saque: \(e.carried.count) pedras")
+                    }.font(.caption.bold()).foregroundStyle(Color.deepTeal)
                     Text(status(e)).font(.caption).foregroundStyle(e.energy == 0 || e.carried.count >= game.state.capacity ? Color.deepGold : Color.white.opacity(0.75))
                         .lineLimit(2).frame(height: 30)
                     HStack(spacing: 8) {
@@ -44,7 +53,7 @@ struct MineView: View {
                 }.padding(.horizontal, 16).padding(.vertical, 8)
             } else {
                 VStack(spacing: 22) {
-                    ScreenTitle(title: "A mina espera", subtitle: "Uma nova expedição. Novas descobertas.")
+                    ScreenTitle(title: "A mina espera", subtitle: "Seus túneis esperam pela próxima descoberta.")
                     Spacer()
                     GemArt(kind: .amethyst).frame(width: 160, height: 180)
                     Text("Energia cheia, mochila vazia. Até onde você vai chegar?").multilineTextAlignment(.center).foregroundStyle(.secondary)
@@ -52,7 +61,9 @@ struct MineView: View {
                     Button("Começar expedição") { game.start() }.buttonStyle(GoldButtonStyle())
                 }.padding(24)
             }
-        }.onAppear { game.mineScene.isPaused = false }
+        }.sheet(isPresented: $showBuild) { MineConstructionPanel().environmentObject(game).presentationDetents([.large]) }
+            .sheet(isPresented: $showMap) { MineOverview().environmentObject(game) }
+            .onAppear { game.mineScene.isPaused = false }
             .onChange(of: scenePhase) { _, phase in game.mineScene.isPaused = phase != .active }
             .background(Color.deepBackground).toolbar(.hidden, for: .navigationBar)
             .confirmationDialog("Guardar \(game.state.expedition?.carried.count ?? 0) pedras e encerrar a expedição?", isPresented: $showReturn, titleVisibility: .visible) {

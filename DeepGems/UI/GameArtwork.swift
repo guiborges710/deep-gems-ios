@@ -17,21 +17,28 @@ enum GameArtwork {
         guard let cg = source.cgImage, let crop = cg.cropping(to: CGRect(x: CGFloat(cg.width) * 0.24, y: CGFloat(cg.height) * 0.02, width: CGFloat(cg.width) * 0.6, height: CGFloat(cg.height) * 0.3)) else { return source }
         let image = UIImage(cgImage: crop); cache[key] = image; return image
     }
+    static func camp(_ level: Int) -> UIImage {
+        region(name: "CampProgressionAtlas", index: min(2, max(0, level - 1)), count: 3)
+    }
+    static func structure(_ kind: StructureKind) -> UIImage {
+        let index = kind == .ladder ? 0 : (kind == .light ? 1 : 2)
+        return region(name: "MineStructureAtlas", index: index, count: 3)
+    }
     static func terrain(_ index: Int) -> UIImage { region(name: "TerrainAtlas", index: index, count: 4) }
     static func upgrade(_ kind: Upgrade, level: Int, pickaxe: PickaxeKind = .iron) -> UIImage {
         if kind == .pickaxe { return self.pickaxe(pickaxe) }
-        let tier = level >= 6 ? 2 : (level >= 3 ? 1 : 0)
+        let tier = level >= 3 ? 2 : (level >= 2 ? 1 : 0)
         return region(name: "UpgradeAtlas", index: (kind == .backpack ? 0 : 3) + tier, count: 6)
     }
     static func gem(_ kind: GemKind) -> UIImage {
         let index = GemKind.allCases.firstIndex(of: kind) ?? 0
         return region(name: "GemAtlas", index: index, count: 5)
     }
-    static func explorer(_ outfit: Outfit) -> UIImage {
-        let key = "explorer-\(outfit.rawValue)"
+    static func explorer(_ outfit: Outfit, tier: Int = 2) -> UIImage {
+        let key = "explorer-\(outfit.rawValue)-\(tier)"
         if let image = cache[key] { return image }
         let original = UIImage(named: "ExplorerV2") ?? UIImage()
-        guard outfit != .teal, let source = original.cgImage else { cache[key] = original; return original }
+        guard let source = original.cgImage else { cache[key] = original; return original }
         // Recolor only teal cloth pixels at render time. Skin, helmet, leather and alpha are preserved.
         let width = source.width, height = source.height
         var bytes = [UInt8](repeating: 0, count: width * height * 4)
@@ -51,9 +58,11 @@ enum GameArtwork {
                 let r = Double(bytes[i]), g = Double(bytes[i + 1]), b = Double(bytes[i + 2])
                 guard bytes[i + 3] > 180, g > r * 1.25, b > r * 1.2, abs(g - b) < max(g, b) * 0.55 else { continue }
                 let alpha = Double(bytes[i + 3])
-                if outfit == .purple {
+                if tier == 1 {
+                    bytes[i] = UInt8(min(alpha, g * 0.85)); bytes[i + 1] = UInt8(min(alpha, g * 0.65)); bytes[i + 2] = UInt8(min(alpha, g * 0.42))
+                } else if outfit == .purple || (tier == 3 && outfit == .teal) {
                     bytes[i] = UInt8(min(alpha, b * 0.95)); bytes[i + 1] = UInt8(min(alpha, r * 1.05)); bytes[i + 2] = UInt8(min(alpha, g * 1.1))
-                } else {
+                } else if outfit == .orange {
                     bytes[i] = UInt8(min(alpha, g * 1.2)); bytes[i + 1] = UInt8(min(alpha, b * 0.65)); bytes[i + 2] = UInt8(min(alpha, r * 0.7))
                 }
             }
@@ -65,8 +74,36 @@ enum GameArtwork {
                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)?.makeImage() else { return original }
             return UIImage(cgImage: output)
         }
-        cache[key] = image
-        return image
+        let renderer = UIGraphicsImageRenderer(size: image.size)
+        let result = renderer.image { _ in
+            image.draw(at: .zero)
+            let w = image.size.width, h = image.size.height
+            if tier == 1 {
+                UIColor.brown.setFill()
+                UIBezierPath(ovalIn: CGRect(x: w * 0.63, y: h * 0.044, width: w * 0.11, height: h * 0.07)).fill()
+                UIColor.darkGray.setFill()
+                UIBezierPath(ovalIn: CGRect(x: w * 0.65, y: h * 0.052, width: w * 0.075, height: h * 0.052)).fill()
+            } else if tier == 3 {
+                UIColor.systemPurple.withAlphaComponent(0.8).setFill()
+                UIBezierPath(roundedRect: CGRect(x: w * 0.41, y: h * 0.105, width: w * 0.2, height: h * 0.025), cornerRadius: h * 0.01).fill()
+                UIColor.white.setFill()
+                UIBezierPath(ovalIn: CGRect(x: w * 0.65, y: h * 0.052, width: w * 0.075, height: h * 0.052)).fill()
+            }
+        }
+        cache[key] = result
+        return result
+    }
+    // Only the original glove/fingers are composited above the shaft, at their original coordinates.
+    static let handRect = CGRect(x: 0.244, y: 0.573, width: 0.152, height: 0.084)
+    static func grippingHand(_ outfit: Outfit, tier: Int) -> UIImage {
+        let key = "hand-\(outfit.rawValue)-\(tier)"
+        if let image = cache[key] { return image }
+        guard let source = explorer(outfit, tier: tier).cgImage,
+              let crop = source.cropping(to: CGRect(x: handRect.minX * CGFloat(source.width),
+                                                   y: handRect.minY * CGFloat(source.height),
+                                                   width: handRect.width * CGFloat(source.width),
+                                                   height: handRect.height * CGFloat(source.height))) else { return UIImage() }
+        let result = UIImage(cgImage: crop); cache[key] = result; return result
     }
     private static func trimmed(_ image: UIImage) -> UIImage {
         guard let source = image.cgImage else { return image }
@@ -134,23 +171,32 @@ struct ExplorerShowcase: View {
     var staminaLevel = 1
     var body: some View {
         GeometryReader { geometry in
-            let image = GameArtwork.explorer(outfit)
+            let tier = backpackLevel >= 3 || pickaxe == .amethyst ? 3 : (backpackLevel >= 2 || pickaxe == .copper ? 2 : 1)
+            let image = GameArtwork.explorer(outfit, tier: tier)
             let ratio = image.size.width / max(1, image.size.height)
             let h = min(geometry.size.height, geometry.size.width / ratio)
             let w = h * ratio
+            let tool = GameArtwork.pickaxe(pickaxe)
+            let toolH = h * MinerEquipmentRig.toolHeight
+            let toolW = toolH * tool.size.width / max(1, tool.size.height)
+            let grip = MinerEquipmentRig.grip(pickaxe)
+            let center = MinerEquipmentRig.toolCenter(kind: pickaxe, bodyWidth: w, bodyHeight: h, toolAspect: tool.size.width / max(1, tool.size.height))
             ZStack {
                 if backpackLevel >= 1 {
                     UpgradeArt(kind: .backpack, level: backpackLevel).frame(width: w * 0.48, height: h * 0.34)
                         .offset(x: -w * 0.27, y: -h * 0.03)
                 }
-                // Grip is calibrated against ExplorerV2's left glove and the normalized pickaxe shaft.
-                Image(uiImage: GameArtwork.pickaxe(pickaxe)).resizable().scaledToFit()
-                    .frame(width: h * 0.42, height: h * 0.42)
-                    .rotationEffect(.degrees(-55), anchor: UnitPoint(x: 0.3, y: 0.7))
-                    .position(x: geometry.size.width / 2 - w * 0.20 + h * 0.084, y: geometry.size.height / 2 + h * 0.12 - h * 0.084)
-                    .allowsHitTesting(false)
                 Image(uiImage: image).resizable().frame(width: w, height: h)
-                if staminaLevel >= 3 {
+                Image(uiImage: tool).resizable()
+                    .frame(width: toolW, height: toolH)
+                    .rotationEffect(.degrees(MinerEquipmentRig.restDegrees), anchor: UnitPoint(x: grip.x, y: grip.y))
+                    .position(x: geometry.size.width / 2 + center.x, y: geometry.size.height / 2 + center.y)
+                    .allowsHitTesting(false)
+                Image(uiImage: GameArtwork.grippingHand(outfit, tier: tier)).resizable()
+                    .frame(width: w * GameArtwork.handRect.width, height: h * GameArtwork.handRect.height)
+                    .offset(x: (GameArtwork.handRect.midX - 0.5) * w, y: (GameArtwork.handRect.midY - 0.5) * h)
+                    .allowsHitTesting(false)
+                if staminaLevel >= 2 {
                     UpgradeArt(kind: .stamina, level: staminaLevel).frame(width: w * 0.78, height: h * 0.2).offset(y: h * 0.39)
                 }
             }.frame(width: geometry.size.width, height: geometry.size.height)

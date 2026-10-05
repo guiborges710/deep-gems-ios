@@ -5,6 +5,9 @@ struct EquipmentView: View {
     @State private var selected: PickaxeKind = .amethyst
     @State private var purchaseConfirmation = false
     @State private var section = ProcessInfo.processInfo.arguments.contains("-deepgems-upgrades-preview") ? 1 : 0
+    init(initialSection: Int? = nil) {
+        _section = State(initialValue: initialSection ?? (ProcessInfo.processInfo.arguments.contains("-deepgems-upgrades-preview") ? 1 : 0))
+    }
     var body: some View {
         ScrollView {
             VStack(spacing: 18) {
@@ -93,7 +96,7 @@ struct EquipmentView: View {
                         Text("Nv. \(game.state.upgradeLevel(item) + 1)").font(.caption.bold()).foregroundStyle(Color.deepGold)
                     }
                     if item != .pickaxe {
-                        Text("Visual reforçado no Nv. 3 • visual épico no Nv. 6").font(.caption2).foregroundStyle(.secondary)
+                        Text("Visual reforçado no Nv. 2 • visual épico no Nv. 3").font(.caption2).foregroundStyle(.secondary)
                     }
                     Button { game.upgrade(item) } label: { Label("Melhorar • \(game.state.upgradeCost(item)) moedas", systemImage: "arrow.up.circle.fill") }
                         .buttonStyle(GoldButtonStyle()).padding(.top, 12)

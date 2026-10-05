@@ -32,14 +32,20 @@ jobs:
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
           xcrun simctl install "$SIMULATOR_ID" .build-ios/Build/Products/Debug-iphonesimulator/DeepGems.app
           mkdir -p visual-checks
-          for SCREEN in base shop upgrades mine character workshop reward cut facets result; do
+          for SCREEN in base starter camp2 camp3 depth shop upgrades mine character grip-iron grip-copper grip-amethyst workshop reward cut facets result; do
             FLAGS="-deepgems-screenshot -deepgems-preview"
             case "$SCREEN" in
+              starter) FLAGS="$FLAGS -deepgems-starter-preview" ;;
+              camp2) FLAGS="$FLAGS -deepgems-camp2-preview" ;;
+              camp3) FLAGS="$FLAGS -deepgems-camp3-preview" ;;
+              depth) FLAGS="$FLAGS -deepgems-depth-preview" ;;
               shop) FLAGS="$FLAGS -deepgems-shop-preview" ;;
               upgrades) FLAGS="$FLAGS -deepgems-shop-preview -deepgems-upgrades-preview" ;;
               mine) FLAGS="$FLAGS -deepgems-mine-preview" ;;
               workshop) FLAGS="$FLAGS -deepgems-workshop-preview" ;;
-              character) FLAGS="$FLAGS -deepgems-character-preview" ;;
+              character|grip-iron) FLAGS="$FLAGS -deepgems-character-preview" ;;
+              grip-copper) FLAGS="$FLAGS -deepgems-character-preview -deepgems-copper-preview" ;;
+              grip-amethyst) FLAGS="$FLAGS -deepgems-character-preview -deepgems-amethyst-preview" ;;
               reward) FLAGS="$FLAGS -deepgems-shop-preview -deepgems-reward-preview" ;;
               cut) FLAGS="$FLAGS -deepgems-cut-preview" ;;
               facets) FLAGS="$FLAGS -deepgems-cut-preview -deepgems-cut-facets-preview" ;;
@@ -53,6 +59,23 @@ jobs:
             fi
             xcrun simctl terminate "$SIMULATOR_ID" com.guiborges.deepgems
           done
+      - name: Record real pickaxe swing
+        run: |
+          set -euo pipefail
+          SIMULATOR_ID=$(xcrun simctl list devices booted -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(v["udid"] for a in d["devices"].values() for v in a))')
+          mkdir -p animation-checks
+          xcrun simctl launch "$SIMULATOR_ID" com.guiborges.deepgems -deepgems-preview -deepgems-screenshot -deepgems-mine-preview -deepgems-swing-preview
+          sleep 2
+          xcrun simctl io "$SIMULATOR_ID" recordVideo --codec=h264 animation-checks/pickaxe-swing.mp4 &
+          RECORDING_PID=$!
+          sleep 5
+          kill -INT "$RECORDING_PID"
+          wait "$RECORDING_PID"
+          xcrun simctl terminate "$SIMULATOR_ID" com.guiborges.deepgems
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deepgems-pickaxe-animation
+          path: animation-checks/
       - uses: actions/upload-artifact@v4
         with:
           name: deepgems-screenshots
